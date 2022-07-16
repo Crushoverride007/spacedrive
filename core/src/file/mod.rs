@@ -1,12 +1,14 @@
+use chrono::{DateTime, Utc};
 use int_enum::IntEnum;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use ts_rs::TS;
 
 use crate::{
+	library::LibraryContext,
 	prisma::{self, file, file_path},
 	sys::SysError,
-	ClientQuery, CoreContext, CoreError, CoreEvent, CoreResponse,
+	ClientQuery, CoreError, CoreEvent, CoreResponse, LibraryQuery,
 };
 pub mod cas;
 pub mod explorer;
@@ -32,9 +34,9 @@ pub struct File {
 	pub ipfs_id: Option<String>,
 	pub note: Option<String>,
 
-	pub date_created: chrono::DateTime<chrono::Utc>,
-	pub date_modified: chrono::DateTime<chrono::Utc>,
-	pub date_indexed: chrono::DateTime<chrono::Utc>,
+	pub date_created: DateTime<Utc>,
+	pub date_modified: DateTime<Utc>,
+	pub date_indexed: DateTime<Utc>,
 
 	pub paths: Vec<FilePath>,
 	// pub media_data: Option<MediaData>,
@@ -55,9 +57,9 @@ pub struct FilePath {
 	pub file_id: Option<i32>,
 	pub parent_id: Option<i32>,
 
-	pub date_created: chrono::DateTime<chrono::Utc>,
-	pub date_modified: chrono::DateTime<chrono::Utc>,
-	pub date_indexed: chrono::DateTime<chrono::Utc>,
+	pub date_created: DateTime<chrono::Utc>,
+	pub date_modified: DateTime<chrono::Utc>,
+	pub date_indexed: DateTime<chrono::Utc>,
 
 	pub file: Option<File>,
 }
@@ -141,12 +143,12 @@ pub enum FileError {
 }
 
 pub async fn set_note(
-	ctx: CoreContext,
+	ctx: LibraryContext,
 	id: i32,
 	note: Option<String>,
 ) -> Result<CoreResponse, CoreError> {
-	let response = ctx
-		.database
+	let _response = ctx
+		.db
 		.file()
 		.find_unique(file::id::equals(id))
 		.update(vec![file::note::set(note.clone())])
@@ -154,10 +156,40 @@ pub async fn set_note(
 		.await
 		.unwrap();
 
-	ctx.emit(CoreEvent::InvalidateQuery(ClientQuery::LibGetExplorerDir {
-		limit: 0,
-		path: "".to_string(),
-		location_id: 0,
+	ctx.emit(CoreEvent::InvalidateQuery(ClientQuery::LibraryQuery {
+		library_id: ctx.id.to_string(),
+		query: LibraryQuery::LibGetExplorerDir {
+			limit: 0,
+			path: "".to_string(),
+			location_id: 0,
+		},
+	}))
+	.await;
+
+	Ok(CoreResponse::Success(()))
+}
+
+pub async fn favorite(
+	ctx: LibraryContext,
+	id: i32,
+	favorite: bool,
+) -> Result<CoreResponse, CoreError> {
+	let _response = ctx
+		.db
+		.file()
+		.find_unique(file::id::equals(id))
+		.update(vec![file::favorite::set(favorite)])
+		.exec()
+		.await
+		.unwrap();
+
+	ctx.emit(CoreEvent::InvalidateQuery(ClientQuery::LibraryQuery {
+		library_id: ctx.id.to_string(),
+		query: LibraryQuery::LibGetExplorerDir {
+			limit: 0,
+			path: "".to_string(),
+			location_id: 0,
+		},
 	}))
 	.await;
 

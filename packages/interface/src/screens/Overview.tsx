@@ -1,5 +1,6 @@
-import { PlusIcon } from '@heroicons/react/solid';
-import { useBridgeQuery } from '@sd/client';
+import { DatabaseIcon, ExclamationCircleIcon, PlusIcon } from '@heroicons/react/solid';
+import { useBridgeQuery, useLibraryQuery } from '@sd/client';
+import { AppPropsContext } from '@sd/client';
 import { Statistics } from '@sd/core';
 import { Button, Input } from '@sd/ui';
 import byteSize from 'byte-size';
@@ -10,7 +11,6 @@ import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
 import create from 'zustand';
 
-import { AppPropsContext } from '../AppPropsContext';
 import { Device } from '../components/device/Device';
 import Dialog from '../components/layout/Dialog';
 
@@ -102,7 +102,7 @@ const StatItem: React.FC<StatItemProps> = (props) => {
 
 export const OverviewScreen = () => {
 	const { data: libraryStatistics, isLoading: isStatisticsLoading } =
-		useBridgeQuery('GetLibraryStatistics');
+		useLibraryQuery('GetLibraryStatistics');
 	const { data: nodeState } = useBridgeQuery('NodeGetState');
 
 	const { overviewStats, setOverviewStats } = useOverviewState();
@@ -157,7 +157,17 @@ export const OverviewScreen = () => {
 				{/* STAT HEADER */}
 				<div className="flex w-full">
 					{/* STAT CONTAINER */}
-					<div className="flex pb-4 overflow-hidden">
+					<div className="flex -mb-1 overflow-hidden">
+						{!libraryStatistics && (
+							<div className="mb-2 ml-2">
+								<div className="font-semibold text-gray-200">
+									<ExclamationCircleIcon className="inline w-4 h-4 mr-1 -mt-1 " /> Missing library
+								</div>
+								<span className="text-xs text-gray-400 ">
+									Ensure the library you have loaded still exists on disk
+								</span>
+							</div>
+						)}
 						{Object.entries(overviewStats).map(([key, value]) => {
 							if (!displayableStatItems.includes(key)) return null;
 
@@ -171,8 +181,9 @@ export const OverviewScreen = () => {
 							);
 						})}
 					</div>
+
 					<div className="flex-grow" />
-					<div className="space-x-2">
+					<div className="space-x-2 ">
 						<Dialog
 							title="Add Device"
 							description="Connect a new device to your library. Either enter another device's code or copy this one."
@@ -205,41 +216,10 @@ export const OverviewScreen = () => {
 						</Dialog>
 					</div>
 				</div>
-				<div className="flex flex-col pb-4 space-y-4">
-					<Device
-						name={`James' MacBook Pro`}
-						size="1TB"
-						locations={[
-							{ name: 'Documents', folder: true },
-							{ name: 'Movies', folder: true },
-							{ name: 'Downloads', folder: true },
-							{ name: 'Minecraft', folder: true },
-							{ name: 'Projects', folder: true },
-							{ name: 'Notes', folder: true }
-						]}
-						type="desktop"
-					/>
-					<Device
-						name={`James' iPhone 12`}
-						size="47.7GB"
-						locations={[
-							{ name: 'Camera Roll', folder: true },
-							{ name: 'Notes', folder: true },
-							{ name: 'App.tsx', format: 'tsx', icon: 'reactts' },
-							{ name: 'vite.config.js', format: 'js', icon: 'vite' }
-						]}
-						type="phone"
-					/>
-					<Device
-						name={`Spacedrive Server`}
-						size="5GB"
-						locations={[
-							{ name: 'Cached', folder: true },
-							{ name: 'Photos', folder: true },
-							{ name: 'Documents', folder: true }
-						]}
-						type="server"
-					/>
+				<div className="flex flex-col pb-4 mt-4 space-y-4">
+					<Device name={`James' MacBook Pro`} size="1TB" locations={[]} type="desktop" />
+					<Device name={`James' iPhone 12`} size="47.7GB" locations={[]} type="phone" />
+					<Device name={`Spacedrive Server`} size="5GB" locations={[]} type="server" />
 				</div>
 				<div className="px-5 py-3 text-sm text-gray-400 rounded-md bg-gray-50 dark:text-gray-400 dark:bg-gray-600">
 					<b>Note: </b>This is a pre-alpha build of Spacedrive, many features are yet to be
