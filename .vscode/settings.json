@@ -23,15 +23,23 @@
 		"subpackage",
 		"svgr",
 		"tailwindcss",
+		"tanstack",
 		"titlebar",
 		"trivago",
 		"tsparticles",
 		"unlisten",
-		"upsert"
+		"upsert",
+		"valtio"
 	],
 	"[rust]": {
 		"editor.defaultFormatter": "rust-lang.rust-analyzer"
 	},
 	"rust-analyzer.procMacro.enable": true,
-	"rust-analyzer.diagnostics.experimental.enable": false
+	"rust-analyzer.diagnostics.experimental.enable": false,
+	"tailwindCSS.experimental.classRegex": [
+    ["cva\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"],
+		"tw`([^`]*)",
+    "tw\\.[^`]+`([^`]*)`",
+    "tw\\(.*?\\).*?`([^`]*)"
+  ],
 }

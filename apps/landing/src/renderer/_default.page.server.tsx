@@ -1,10 +1,9 @@
-import React from 'react';
 import ReactDOMServer from 'react-dom/server';
 import { Helmet } from 'react-helmet';
 import { dangerouslySkipEscape, escapeInject } from 'vite-plugin-ssr';
 import type { PageContextBuiltIn } from 'vite-plugin-ssr';
 
-import { App } from '../App';
+import App from '../App';
 import type { PageContext } from './types';
 
 export { render };
@@ -37,8 +36,8 @@ async function render(pageContext: PageContextBuiltIn & PageContext) {
 				${dangerouslySkipEscape(helmet.meta.toString())}
 				${dangerouslySkipEscape(helmet.link.toString())}
 	    </head>
-	      <body ${dangerouslySkipEscape(helmet.bodyAttributes.toString())}>
-	        <div id="page-view">${dangerouslySkipEscape(pageHtml)}</div>
+	      <body id="outer-container" ${dangerouslySkipEscape(helmet.bodyAttributes.toString())}>
+	        <main id="page-view" class="overflow-hidden">${dangerouslySkipEscape(pageHtml)}</main>
 	      </body>
 	    </html>
 		`;

@@ -1,93 +1,110 @@
-import { Menu } from '@headlessui/react';
-import { ChevronDownIcon } from '@heroicons/react/solid';
+import { Menu, Transition } from '@headlessui/react';
+import { ReactComponent as CaretDown } from '@sd/assets/svgs/caret.svg';
+import { VariantProps, cva } from 'class-variance-authority';
 import clsx from 'clsx';
-import React from 'react';
+import { Fragment, PropsWithChildren } from 'react';
+import { Link } from 'react-router-dom';
 
-import { Button } from './Button';
+import * as UI from '.';
+import { tw } from './utils';
 
-export type DropdownItem = {
-	name: string;
-	icon?: any;
-	selected?: boolean;
-	onPress?: () => any;
-}[];
+export const Section = tw.div`px-1 py-1 space-y-[2px]`;
 
-export interface DropdownProps {
-	items: DropdownItem[];
-	buttonText?: string;
-	buttonProps?: React.ComponentProps<typeof Button>;
-	buttonComponent?: React.ReactNode;
-	buttonIcon?: any;
+const itemStyles = cva(
+	'text-sm group flex grow shrink-0 rounded items-center w-full whitespace-nowrap px-2 py-1 mb-[3px] disabled:opacity-50 font-medium',
+	{
+		variants: {
+			selected: {
+				true: 'bg-accent hover:!bg-accent text-white',
+				undefined: 'hover:bg-menu-hover',
+				false: 'hover:bg-menu-hover'
+			},
+			active: {
+				true: ''
+			}
+		}
+	}
+);
+
+const itemIconStyles = cva('mr-2 w-4 h-4', {
+	variants: {}
+});
+
+type DropdownItemProps =
+	| PropsWithChildren<{
+			to?: string;
+			className?: string;
+			icon?: any;
+			onClick?: () => void;
+	  }> &
+			VariantProps<typeof itemStyles>;
+
+export const Item = ({ to, className, icon: Icon, children, ...props }: DropdownItemProps) => {
+	let content = (
+		<>
+			{Icon && <Icon className={itemIconStyles(props)} />}
+			<span className="text-left">{children}</span>
+		</>
+	);
+
+	return to ? (
+		<Link {...props} to={to} className={clsx(itemStyles(props), className)}>
+			{content}
+		</Link>
+	) : (
+		<button {...props} className={clsx(itemStyles(props), className)}>
+			{content}
+		</button>
+	);
+};
+
+export const Button = ({ children, className, ...props }: UI.ButtonProps) => {
+	return (
+		<UI.Button size="sm" {...props} className={clsx('flex text-left', className)}>
+			{children}
+			<span className="flex-grow" />
+			<CaretDown
+				className="w-[12px] text-ink-dull transition-transform ui-open:rotate-180 ui-open:-translate-y-[1px] translate-y-[1px]"
+				aria-hidden="true"
+			/>
+		</UI.Button>
+	);
+};
+
+export interface DropdownRootProps {
+	button: React.ReactNode;
 	className?: string;
 	itemsClassName?: string;
-	itemButtonClassName?: string;
 	align?: 'left' | 'right';
 }
 
-export const Dropdown: React.FC<DropdownProps> = (props) => {
+export const Root = (props: PropsWithChildren<DropdownRootProps>) => {
 	return (
-		<div className={clsx('w-full mt-2', props.className)}>
-			<Menu as="div" className="relative flex w-full text-left">
+		<div className={props.className}>
+			<Menu as="div" className={clsx('relative flex w-full text-left')}>
 				<Menu.Button as="div" className="flex-1 outline-none">
-					{props.buttonComponent ? (
-						props.buttonComponent
-					) : (
-						<Button size="sm" {...props.buttonProps}>
-							{props.buttonIcon}
-							{props.buttonText && (
-								<>
-									<span className="w-32 truncate"> {props.buttonText}</span>
-									<div className="flex-grow" />
-									<ChevronDownIcon
-										className="w-5 h-5 ml-2 -mr-1 text-violet-200 hover:text-violet-100 "
-										aria-hidden="true"
-									/>
-								</>
-							)}
-						</Button>
-					)}
+					{props.button}
 				</Menu.Button>
-
-				<Menu.Items
-					className={clsx(
-						'absolute z-50 min-w-fit w-full bg-white border divide-y divide-gray-100 rounded shadow-xl top-full dark:bg-gray-550 dark:divide-gray-500 dark:border-gray-600 ring-1 ring-black ring-opacity-5 focus:outline-none',
-						props.itemsClassName,
-						{ 'left-0': props.align === 'left' },
-						{ 'right-0': props.align === 'right' }
-					)}
+				<Transition
+					as={Fragment}
+					enter="transition duration-100 ease-out"
+					enterFrom="transform -translate-y-2 opacity-0"
+					enterTo="transform translate-y-0 opacity-100"
+					leave="transition duration-75 ease-out"
+					leaveFrom="transform translate-y-0 opacity-100"
+					leaveTo="transform -translate-y-2 opacity-0"
 				>
-					{props.items.map((item, index) => (
-						<div key={index} className="px-1 py-1 space-y-[2px]">
-							{item.map((button, index) => (
-								<Menu.Item key={index}>
-									{({ active }) => (
-										<button
-											onClick={button.onPress}
-											className={clsx(
-												'text-sm group flex grow shrink-0 rounded items-center w-full whitespace-nowrap px-2 py-1 mb-[2px] dark:hover:bg-gray-500',
-												{
-													'bg-gray-300 dark:!bg-gray-500 dark:hover:bg-gray-500': button.selected
-													// 'text-gray-900 dark:text-gray-200': !active
-												},
-												props.itemButtonClassName
-											)}
-										>
-											{button.icon && (
-												<button.icon
-													className={clsx('mr-2 w-4 h-4', {
-														'dark:text-gray-100': active,
-														'text-gray-600 dark:text-gray-200': !active
-													})}
-												/>
-											)}
-											<span className="text-left">{button.name}</span>
-										</button>
-									)}
-								</Menu.Item>
-							))}
-						</div>
-					))}
-				</Menu.Items>
+					<Menu.Items
+						className={clsx(
+							'absolute z-50 min-w-fit w-full border divide-y divide-menu-line rounded-md shadow-xl shadow-menu-shade/30 top-full focus:outline-none bg-menu border-menu-line text-menu-ink',
+							props.itemsClassName,
+							{ 'left-0': props.align === 'left' },
+							{ 'right-0': props.align === 'right' }
+						)}
+					>
+						{props.children}
+					</Menu.Items>
+				</Transition>
 			</Menu>
 		</div>
 	);

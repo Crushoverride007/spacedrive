@@ -1,63 +1,65 @@
-import { useBridgeQuery } from '@sd/client';
-import { useLibraryStore } from '@sd/client';
-import React, { useEffect } from 'react';
-import { Route, Routes, useLocation } from 'react-router-dom';
+import { lazy } from '@loadable/component';
+import { useCurrentLibrary, useInvalidateQuery } from '@sd/client';
+import { Navigate, Route, Routes } from 'react-router-dom';
 
 import { AppLayout } from './AppLayout';
-import { NotFound } from './NotFound';
-import { ContentScreen } from './screens/Content';
-import { DebugScreen } from './screens/Debug';
-import { ExplorerScreen } from './screens/Explorer';
-import { OverviewScreen } from './screens/Overview';
-import { PhotosScreen } from './screens/Photos';
-import { RedirectPage } from './screens/Redirect';
-import { TagScreen } from './screens/Tag';
-import { SettingsScreen } from './screens/settings/Settings';
-import AppearanceSettings from './screens/settings/client/AppearanceSettings';
-import ExtensionSettings from './screens/settings/client/ExtensionsSettings';
-import GeneralSettings from './screens/settings/client/GeneralSettings';
-import KeybindSettings from './screens/settings/client/KeybindSettings';
-import PrivacySettings from './screens/settings/client/PrivacySettings';
-import AboutSpacedrive from './screens/settings/info/AboutSpacedrive';
-import Changelog from './screens/settings/info/Changelog';
-import Support from './screens/settings/info/Support';
-import ContactsSettings from './screens/settings/library/ContactsSettings';
-import KeysSettings from './screens/settings/library/KeysSetting';
-import LibraryGeneralSettings from './screens/settings/library/LibraryGeneralSettings';
-import LocationSettings from './screens/settings/library/LocationSettings';
-import NodesSettings from './screens/settings/library/NodesSettings';
-import SecuritySettings from './screens/settings/library/SecuritySettings';
-import SharingSettings from './screens/settings/library/SharingSettings';
-import SyncSettings from './screens/settings/library/SyncSettings';
-import TagsSettings from './screens/settings/library/TagsSettings';
-import ExperimentalSettings from './screens/settings/node/ExperimentalSettings';
-import LibrarySettings from './screens/settings/node/LibrariesSettings';
-import P2PSettings from './screens/settings/node/P2PSettings';
+import { useKeybindHandler } from './hooks/useKeyboardHandler';
+
+// Using React.lazy breaks hot reload so we don't use it.
+const DebugScreen = lazy(() => import('./screens/Debug'));
+const SettingsScreen = lazy(() => import('./screens/settings/Settings'));
+const TagExplorer = lazy(() => import('./screens/TagExplorer'));
+const PhotosScreen = lazy(() => import('./screens/Photos'));
+const OverviewScreen = lazy(() => import('./screens/Overview'));
+const ContentScreen = lazy(() => import('./screens/Content'));
+const LocationExplorer = lazy(() => import('./screens/LocationExplorer'));
+const OnboardingScreen = lazy(() => import('./components/onboarding/Onboarding'));
+const NotFound = lazy(() => import('./NotFound'));
+
+const AppearanceSettings = lazy(() => import('./screens/settings/client/AppearanceSettings'));
+const ExtensionSettings = lazy(() => import('./screens/settings/client/ExtensionsSettings'));
+const GeneralSettings = lazy(() => import('./screens/settings/client/GeneralSettings'));
+const KeybindingSettings = lazy(() => import('./screens/settings/client/KeybindingSettings'));
+const PrivacySettings = lazy(() => import('./screens/settings/client/PrivacySettings'));
+const AboutSpacedrive = lazy(() => import('./screens/settings/info/AboutSpacedrive'));
+const Changelog = lazy(() => import('./screens/settings/info/Changelog'));
+const Support = lazy(() => import('./screens/settings/info/Support'));
+const ContactsSettings = lazy(() => import('./screens/settings/library/ContactsSettings'));
+const KeysSettings = lazy(() => import('./screens/settings/library/KeysSetting'));
+const LibraryGeneralSettings = lazy(
+	() => import('./screens/settings/library/LibraryGeneralSettings')
+);
+const LocationSettings = lazy(() => import('./screens/settings/library/LocationSettings'));
+const NodesSettings = lazy(() => import('./screens/settings/library/NodesSettings'));
+const SecuritySettings = lazy(() => import('./screens/settings/library/SecuritySettings'));
+const SharingSettings = lazy(() => import('./screens/settings/library/SharingSettings'));
+const SyncSettings = lazy(() => import('./screens/settings/library/SyncSettings'));
+const TagsSettings = lazy(() => import('./screens/settings/library/TagsSettings'));
+const ExperimentalSettings = lazy(() => import('./screens/settings/node/ExperimentalSettings'));
+const LibrarySettings = lazy(() => import('./screens/settings/node/LibrariesSettings'));
+const P2PSettings = lazy(() => import('./screens/settings/node/P2PSettings'));
 
 export function AppRouter() {
-	let location = useLocation();
-	let state = location.state as { backgroundLocation?: Location };
-	const libraryState = useLibraryStore();
-	const { data: libraries } = useBridgeQuery('GetLibraries');
+	const { library } = useCurrentLibrary();
 
-	// TODO: This can be removed once we add a setup flow to the app
-	useEffect(() => {
-		if (libraryState.currentLibraryUuid === null && libraries && libraries.length > 0) {
-			libraryState.switchLibrary(libraries[0].uuid);
-		}
-	}, [libraryState.currentLibraryUuid, libraries]);
+	useKeybindHandler();
+	useInvalidateQuery();
 
 	return (
-		<>
-			{libraryState.currentLibraryUuid === null ? (
-				<>
-					{/* TODO: Remove this when adding app setup flow */}
-					<h1>No Library Loaded...</h1>
-				</>
-			) : (
-				<Routes location={state?.backgroundLocation || location}>
-					<Route path="/" element={<AppLayout />}>
-						<Route index element={<RedirectPage to="/overview" />} />
+		<Routes>
+			<Route path="onboarding" element={<OnboardingScreen />} />
+			<Route element={<AppLayout />}>
+				{/* As we are caching the libraries in localStore so this *shouldn't* result is visual problems unless something else is wrong */}
+				{library === undefined ? (
+					<Route
+						path="*"
+						element={
+							<h1 className="p-4 text-white">Please select or create a library in the sidebar.</h1>
+						}
+					/>
+				) : (
+					<>
+						<Route index element={<Navigate to="/overview" />} />
 						<Route path="overview" element={<OverviewScreen />} />
 						<Route path="content" element={<ContentScreen />} />
 						<Route path="photos" element={<PhotosScreen />} />
@@ -66,7 +68,7 @@ export function AppRouter() {
 							<Route index element={<GeneralSettings />} />
 							<Route path="general" element={<GeneralSettings />} />
 							<Route path="appearance" element={<AppearanceSettings />} />
-							<Route path="keybinds" element={<KeybindSettings />} />
+							<Route path="keybindings" element={<KeybindingSettings />} />
 							<Route path="extensions" element={<ExtensionSettings />} />
 							<Route path="p2p" element={<P2PSettings />} />
 							<Route path="contacts" element={<ContactsSettings />} />
@@ -88,12 +90,12 @@ export function AppRouter() {
 							<Route path="changelog" element={<Changelog />} />
 							<Route path="support" element={<Support />} />
 						</Route>
-						<Route path="explorer/:id" element={<ExplorerScreen />} />
-						<Route path="tag/:id" element={<TagScreen />} />
+						<Route path="location/:id" element={<LocationExplorer />} />
+						<Route path="tag/:id" element={<TagExplorer />} />
 						<Route path="*" element={<NotFound />} />
-					</Route>
-				</Routes>
-			)}
-		</>
+					</>
+				)}
+			</Route>
+		</Routes>
 	);
 }

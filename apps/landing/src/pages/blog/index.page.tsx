@@ -1,21 +1,20 @@
-import { PostOrPage, PostsOrPages, Tag } from '@tryghost/content-api';
-import React, { useEffect, useState } from 'react';
+import { PostOrPage, Tag } from '@tryghost/content-api';
 import { Helmet } from 'react-helmet';
 
 import { BlogTag } from '../../components/BlogTag';
 import { getWindow } from '../../utils';
-import { blogEnabled } from './api';
+import { blogEnabled } from './blog';
 
 function Page({ posts }: { posts: PostOrPage[] }) {
 	if (!blogEnabled) {
-		let window = getWindow();
+		const window = getWindow();
 		if (!window) return;
 		window.location.href = '/blog-not-enabled';
 		return <></>;
 	}
 
 	return (
-		<div className="container flex flex-col max-w-4xl gap-20 p-4 m-auto mt-32 mb-20 prose lg:prose-xs dark:prose-invert">
+		<div className="container flex flex-col max-w-4xl gap-20 p-4 pt-32 m-auto mb-20 prose lg:prose-xs dark:prose-invert">
 			<Helmet>
 				<title>Spacedrive Blog</title>
 				<meta name="description" content="Get the latest from Spacedrive." />
@@ -28,6 +27,7 @@ function Page({ posts }: { posts: PostOrPage[] }) {
 				{posts.map((post) => {
 					return (
 						<div
+							key={post.id}
 							onClick={() => {
 								window.location.href = `/blog/${post.slug}`;
 							}}
@@ -49,9 +49,9 @@ function Page({ posts }: { posts: PostOrPage[] }) {
 									{new Date(post.published_at ?? '').toLocaleDateString()}
 								</p>
 								<div className="flex flex-wrap gap-2 mt-4">
-									{post.tags?.map((tag: Tag) => {
-										return <BlogTag tag={tag} />;
-									})}
+									{post.tags?.map((tag: Tag) => (
+										<BlogTag key={tag.id} tag={tag} />
+									))}
 								</div>
 							</div>
 						</div>
@@ -62,4 +62,4 @@ function Page({ posts }: { posts: PostOrPage[] }) {
 	);
 }
 
-export default Page;
+export { Page };

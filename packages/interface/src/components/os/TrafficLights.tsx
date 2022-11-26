@@ -1,9 +1,9 @@
+import closeIconPath from '@sd/assets/svgs/macos_close.svg';
+import fullscreenIconPath from '@sd/assets/svgs/macos_fullscreen.svg';
+import minimizeIconPath from '@sd/assets/svgs/macos_minimize.svg';
 import clsx from 'clsx';
-import React, { useEffect } from 'react';
+import { HTMLAttributes, useEffect, useRef } from 'react';
 
-import closeIconPath from '../../assets/svg/macos_close.svg';
-import fullscreenIconPath from '../../assets/svg/macos_fullscreen.svg';
-import minimizeIconPath from '../../assets/svg/macos_minimize.svg';
 import { useFocusState } from '../../hooks/useFocusState';
 import { DefaultProps } from '../primitive/types';
 
@@ -13,29 +13,31 @@ export interface TrafficLightsProps extends DefaultProps {
 	onFullscreen?: () => void;
 }
 
-export const MacTrafficLights: React.FC<TrafficLightsProps> = (props) => {
+export function MacTrafficLights(props: TrafficLightsProps) {
+	const {onClose, onMinimize, onFullscreen, className} = props;
 	const [focused] = useFocusState();
+
 	return (
 		<div
 			data-tauri-drag-region
-			className={clsx('flex flex-row space-x-[7.5px] group', props.className)}
+			className={clsx('flex flex-row space-x-[7.5px] group', className)}
 		>
-			<TrafficLight type="close" onClick={props.onClose} colorful={focused} />
-			<TrafficLight type="minimize" onClick={props.onMinimize} colorful={focused} />
-			<TrafficLight type="fullscreen" onClick={props.onFullscreen} colorful={focused} />
+			<TrafficLight type="close" onClick={onClose} colorful={focused} />
+			<TrafficLight type="minimize" onClick={onMinimize} colorful={focused} />
+			<TrafficLight type="fullscreen" onClick={onFullscreen} colorful={focused} />
 		</div>
 	);
-};
+}
 
 interface TrafficLightProps {
 	type: 'close' | 'minimize' | 'fullscreen';
 	colorful: boolean;
-	onClick?: React.HTMLAttributes<HTMLDivElement>['onClick'];
+	onClick?: HTMLAttributes<HTMLDivElement>['onClick'];
 }
 
-const TrafficLight: React.FC<TrafficLightProps> = (props) => {
+function TrafficLight(props: TrafficLightProps) {
 	const { onClick = () => undefined, colorful = false, type } = props;
-	const iconPath = React.useRef<string>(closeIconPath);
+	const iconPath = useRef<string>(closeIconPath);
 
 	useEffect(() => {
 		switch (type) {
@@ -75,4 +77,4 @@ const TrafficLight: React.FC<TrafficLightProps> = (props) => {
 			/>
 		</div>
 	);
-};
+}

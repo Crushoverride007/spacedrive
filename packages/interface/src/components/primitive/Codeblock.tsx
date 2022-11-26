@@ -1,7 +1,6 @@
-import React from 'react';
 import ReactJson, { ReactJsonViewProps } from 'react-json-view';
 
-export interface CodeBlockProps extends ReactJsonViewProps {}
+export type CodeBlockProps = ReactJsonViewProps;
 
 export default function CodeBlock(props: CodeBlockProps) {
 	return (

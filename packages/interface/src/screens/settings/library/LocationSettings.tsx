@@ -1,26 +1,17 @@
-import { PlusIcon } from '@heroicons/react/solid';
-import { useBridgeQuery, useLibraryCommand, useLibraryQuery } from '@sd/client';
-import { AppPropsContext } from '@sd/client';
-import { Button } from '@sd/ui';
-import React, { useContext } from 'react';
+import { useLibraryMutation, useLibraryQuery } from '@sd/client';
+import { LocationCreateArgs } from '@sd/client';
+import { Button, Input } from '@sd/ui';
+import { MagnifyingGlass } from 'phosphor-react';
 
 import LocationListItem from '../../../components/location/LocationListItem';
-import { InputContainer } from '../../../components/primitive/InputContainer';
 import { SettingsContainer } from '../../../components/settings/SettingsContainer';
 import { SettingsHeader } from '../../../components/settings/SettingsHeader';
-
-// const exampleLocations = [
-// 	{ option: 'Macintosh HD', key: 'macintosh_hd' },
-// 	{ option: 'LaCie External', key: 'lacie_external' },
-// 	{ option: 'Seagate 8TB', key: 'seagate_8tb' }
-// ];
+import { usePlatform } from '../../../util/Platform';
 
 export default function LocationSettings() {
-	const { data: locations } = useLibraryQuery('GetLocations');
-
-	const appProps = useContext(AppPropsContext);
-
-	const { mutate: createLocation } = useLibraryCommand('LocCreate');
+	const platform = usePlatform();
+	const { data: locations } = useLibraryQuery(['locations.list']);
+	const { mutate: createLocation } = useLibraryMutation('locations.create');
 
 	return (
 		<SettingsContainer>
@@ -29,13 +20,28 @@ export default function LocationSettings() {
 				title="Locations"
 				description="Manage your storage locations."
 				rightArea={
-					<div className="flex-row space-x-2">
+					<div className="flex flex-row items-center space-x-5">
+						<div className="relative hidden lg:block">
+							<MagnifyingGlass className="absolute w-[18px] h-auto top-[8px] left-[11px] text-gray-350" />
+							<Input className="!p-0.5 !pl-9" placeholder="Search locations" />
+						</div>
 						<Button
-							variant="primary"
+							variant="accent"
 							size="sm"
 							onClick={() => {
-								appProps?.openDialog({ directory: true }).then((result) => {
-									if (result) createLocation({ path: result as string });
+								if (!platform.openFilePickerDialog) {
+									// TODO: Support opening locations on web
+									alert('Opening a dialogue is not supported on this platform!');
+									return;
+								}
+
+								platform.openFilePickerDialog().then((result) => {
+									// TODO: Pass indexer rules ids to create location
+									if (result)
+										createLocation({
+											path: result as string,
+											indexer_rules_ids: []
+										} as LocationCreateArgs);
 								});
 							}}
 						>

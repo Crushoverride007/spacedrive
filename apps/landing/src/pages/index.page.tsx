@@ -1,11 +1,11 @@
+import { ReactComponent as Info } from '@sd/assets/svgs/info.svg';
 import clsx from 'clsx';
-import React, { Suspense, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet';
-
-import { ReactComponent as Info } from '@sd/interface/assets/svg/info.svg';
 
 import AppEmbed, { AppEmbedPlaceholder } from '../components/AppEmbed';
 import { Bubbles } from '../components/Bubbles';
+// import { Bubbles } from '../components/Bubbles';
 import HomeCTA from '../components/HomeCTA';
 import NewBanner from '../components/NewBanner';
 import { usePageContext } from '../renderer/usePageContext';
@@ -20,7 +20,7 @@ interface SectionProps {
 }
 
 function Section(props: SectionProps = { orientation: 'left' }) {
-	let info = (
+	const info = (
 		<div className="px-4 py-10 sm:px-10">
 			{props.heading && <h1 className="text-2xl font-black sm:text-4xl">{props.heading}</h1>}
 			{props.description && (
@@ -81,7 +81,7 @@ function Page() {
 	}, []);
 
 	return (
-		<>
+		<div className="flex flex-col items-center w-full px-4">
 			<Helmet>
 				<title>Spacedrive — A file manager from the future.</title>
 				<meta
@@ -142,8 +142,7 @@ function Page() {
 						<br />
 						<a
 							className="transition text-primary-600 hover:text-primary-500"
-							href="https://github.com/spacedriveapp"
-							target="_blank"
+							href="/docs/product/getting-started/introduction"
 						>
 							Find out more →
 						</a>
@@ -151,8 +150,8 @@ function Page() {
 				}
 			/>
 			<Bubbles />
-		</>
+		</div>
 	);
 }
 
-export default Page;
+export { Page };

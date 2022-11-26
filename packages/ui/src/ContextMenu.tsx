@@ -1,106 +1,138 @@
-import * as ContextMenuPrimitive from '@radix-ui/react-context-menu';
-import { Root, Trigger } from '@radix-ui/react-context-menu';
+import * as RadixCM from '@radix-ui/react-context-menu';
+import { VariantProps, cva } from 'class-variance-authority';
 import clsx from 'clsx';
 import { CaretRight, Icon } from 'phosphor-react';
-import { Question } from 'phosphor-react';
-import React, { ComponentPropsWithRef } from 'react';
+import { PropsWithChildren, Suspense } from 'react';
 
-export interface ContextMenuItem {
-	label: string;
-	icon?: Icon;
-	danger?: boolean;
-	onClick: () => void;
-
-	children?: ContextMenuSection[];
+interface Props extends RadixCM.MenuContentProps {
+	trigger: React.ReactNode;
 }
 
-export type ContextMenuSection = (ContextMenuItem | string)[];
+const MENU_CLASSES = `
+  flex flex-col
+  min-w-[8rem] px-1 py-0.5
+  text-left text-sm text-menu-ink
+  bg-menu cool-shadow
+	border border-menu-line
+  select-none cursor-default rounded-md
+`;
 
-export interface ContextMenuProps {
-	items?: ContextMenuSection[];
-	className?: string;
-}
-
-export const ContextMenu: React.FC<ContextMenuProps> = (props) => {
-	const { items: sections = [], className, ...rest } = props;
-
+export const ContextMenu = ({
+	trigger,
+	children,
+	className,
+	...props
+}: PropsWithChildren<Props>) => {
 	return (
-		<ContextMenuPrimitive.Content
-			className={clsx(
-				'shadow-2xl min-w-[15rem] shadow-gray-300 dark:shadow-gray-750 flex flex-col select-none cursor-default bg-gray-50 text-gray-800 border-gray-200 dark:bg-gray-650 dark:text-gray-100 dark:border-gray-550 text-left text-sm rounded gap-1.5 border py-1.5',
-				className
-			)}
-			{...rest}
-		>
-			{sections.map((sec, i) => (
-				<React.Fragment key={i}>
-					{i !== 0 && (
-						<ContextMenuPrimitive.Separator className="border-0 border-b border-b-gray-300 dark:border-b-gray-550 mx-2" />
-					)}
-
-					<ContextMenuPrimitive.Group className="flex items-stretch flex-col gap-0.5">
-						{sec.map((item) => {
-							if (typeof item === 'string')
-								return (
-									<ContextMenuPrimitive.Label
-										key={item}
-										className="text-xs ml-2 mt-1 uppercase text-gray-400"
-									>
-										{item}
-									</ContextMenuPrimitive.Label>
-								);
-
-							const { icon: ItemIcon = Question } = item;
-
-							let ItemComponent:
-								| typeof ContextMenuPrimitive.Item
-								| typeof ContextMenuPrimitive.TriggerItem = ContextMenuPrimitive.Item;
-
-							if ((item.children?.length ?? 0) > 0)
-								ItemComponent = ((props) => (
-									<ContextMenuPrimitive.Root>
-										<ContextMenuPrimitive.TriggerItem {...props}>
-											{props.children}
-										</ContextMenuPrimitive.TriggerItem>
-
-										<ContextMenu items={item.children} className="relative -left-1 -top-2" />
-									</ContextMenuPrimitive.Root>
-								)) as typeof ContextMenuPrimitive.TriggerItem;
-
-							return (
-								<ItemComponent
-									style={{
-										font: 'inherit',
-										textAlign: 'inherit'
-									}}
-									className={clsx(
-										'focus:outline-none group cursor-default flex-1 px-1.5 py-0 group-first:pt-1.5',
-										{
-											'text-red-600 dark:text-red-400': item.danger
-										}
-									)}
-									onClick={item.onClick}
-									key={item.label}
-								>
-									<div className="px-1.5 py-[0.4em] group-focus:bg-gray-150 group-hover:bg-gray-150 dark:group-focus:bg-gray-550 dark:group-hover:bg-gray-550 flex flex-row gap-2.5 items-center rounded-sm">
-										{<ItemIcon size={18} />}
-
-										<ContextMenuPrimitive.Label className="leading-snug flex-grow text-[14px] font-normal">
-											{item.label}
-										</ContextMenuPrimitive.Label>
-
-										{(item.children?.length ?? 0) > 0 && (
-											<CaretRight weight="fill" size={12} alt="" />
-										)}
-									</div>
-								</ItemComponent>
-							);
-						})}
-					</ContextMenuPrimitive.Group>
-				</React.Fragment>
-			))}
-		</ContextMenuPrimitive.Content>
+		<RadixCM.Root>
+			<RadixCM.Trigger asChild>{trigger}</RadixCM.Trigger>
+			<RadixCM.Portal>
+				<RadixCM.Content {...props} className={clsx(MENU_CLASSES, className)}>
+					{children}
+				</RadixCM.Content>
+			</RadixCM.Portal>
+		</RadixCM.Root>
 	);
 };
 
-export { Trigger, Root };
+export const Separator = () => (
+	<RadixCM.Separator className="mx-2 border-0 border-b pointer-events-none border-b-menu-line" />
+);
+
+export const SubMenu = ({
+	label,
+	icon,
+	className,
+	...props
+}: RadixCM.MenuSubContentProps & ItemProps) => {
+	return (
+		<RadixCM.Sub>
+			<RadixCM.SubTrigger className="[&[data-state='open']_div]:bg-accent [&[data-state='open']_div]:text-white focus:outline-none  text-menu-ink py-[3px]">
+				<DivItem rightArrow {...{ label, icon }} />
+			</RadixCM.SubTrigger>
+			<RadixCM.Portal>
+				<Suspense fallback={null}>
+					<RadixCM.SubContent {...props} className={clsx(MENU_CLASSES, '-mt-2', className)} />
+				</Suspense>
+			</RadixCM.Portal>
+		</RadixCM.Sub>
+	);
+};
+
+const itemStyles = cva(
+	[
+		'flex flex-row items-center justify-start flex-1',
+		'px-2 py-[3px] space-x-2',
+		'cursor-default rounded',
+		'focus:outline-none'
+	],
+	{
+		variants: {
+			variant: {
+				default: 'hover:bg-accent focus:bg-accent hover:text-white',
+				danger: [
+					'text-red-600 dark:text-red-400',
+					'hover:text-white focus:text-white',
+					'hover:bg-red-500 focus:bg-red-500'
+				]
+			}
+		},
+		defaultVariants: {
+			variant: 'default'
+		}
+	}
+);
+
+interface ItemProps extends VariantProps<typeof itemStyles> {
+	icon?: Icon;
+	rightArrow?: boolean;
+	label?: string;
+	keybind?: string;
+}
+
+export const Item = ({
+	icon,
+	label,
+	rightArrow,
+	children,
+	keybind,
+	variant,
+	...props
+}: ItemProps & RadixCM.MenuItemProps) => (
+	<RadixCM.Item
+		{...props}
+		className="!cursor-default select-none group  text-menu-ink focus:outline-none py-0.5 active:opacity-80"
+	>
+		<div className={itemStyles({ variant })}>
+			{children ? children : <ItemInternals {...{ icon, label, rightArrow, keybind }} />}
+		</div>
+	</RadixCM.Item>
+);
+
+const DivItem = ({ variant, ...props }: ItemProps) => (
+	<div className={itemStyles({ variant })}>
+		<ItemInternals {...props} />
+	</div>
+);
+
+const ItemInternals = ({ icon, label, rightArrow, keybind }: ItemProps) => {
+	const ItemIcon = icon;
+	return (
+		<>
+			{ItemIcon && <ItemIcon size={18} />}
+			{label && <p>{label}</p>}
+
+			{keybind && (
+				<span className="absolute text-xs font-medium right-3 flex-end text-menu-faint group-hover:text-white">
+					{keybind}
+				</span>
+			)}
+			{rightArrow && (
+				<>
+					<div className="flex-1" />
+					<CaretRight weight="fill" size={12} alt="" className="text-menu-faint" />
+				</>
+			)}
+		</>
+	);
+};

@@ -1,1 +1,1 @@
-export * from './useCoreEvents';
+export * from './useCurrentLibrary';

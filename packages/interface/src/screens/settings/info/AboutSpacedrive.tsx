@@ -1,22 +1,18 @@
-import React from 'react';
+import { useBridgeQuery } from '@sd/client';
 
-import { Toggle } from '../../../components/primitive';
-import { InputContainer } from '../../../components/primitive/InputContainer';
 import { SettingsContainer } from '../../../components/settings/SettingsContainer';
 import { SettingsHeader } from '../../../components/settings/SettingsHeader';
 
 export default function AboutSpacedrive() {
+	const buildInfo = useBridgeQuery(['buildInfo']);
+
 	return (
 		<SettingsContainer>
 			<SettingsHeader title="About Spacedrive" description="The file manager from the future." />
-			<span>Version {}</span>
-			<div className="flex flex-col">
-				<span className="mb-1 text-sm font-bold">Created by</span>
-				<span className="max-w-md text-xs text-gray-400">
-					Jamie Pine, Brendan Allan, Oscar Beaumont, Haden Fletcher, Haris Mehrzad Benjamin Akar,
-					and many more.
-				</span>
-			</div>
+
+			<h1 className="!m-0 text-sm">
+				Build: v{buildInfo.data?.version || '-.-.-'} - {buildInfo.data?.commit || 'dev'}
+			</h1>
 		</SettingsContainer>
 	);
 }

@@ -1,125 +1,17 @@
-import {
-	AnnotationIcon,
-	CogIcon,
-	CollectionIcon,
-	DatabaseIcon,
-	GlobeAltIcon,
-	HeartIcon,
-	InformationCircleIcon,
-	KeyIcon,
-	LibraryIcon,
-	LightBulbIcon,
-	LockClosedIcon,
-	ShieldCheckIcon,
-	SparklesIcon,
-	TagIcon,
-	TerminalIcon
-} from '@heroicons/react/outline';
-import {
-	BookOpen,
-	Cloud,
-	FlyingSaucer,
-	HandWaving,
-	HardDrive,
-	Hash,
-	Info,
-	KeyReturn,
-	PaintBrush,
-	PuzzlePiece,
-	ShareNetwork,
-	Shield,
-	UsersFour
-} from 'phosphor-react';
-import React from 'react';
+import { Suspense } from 'react';
+import { Outlet } from 'react-router';
 
-import { SidebarLink } from '../../components/file/Sidebar';
-import {
-	SettingsHeading,
-	SettingsIcon,
-	SettingsScreenContainer
-} from '../../components/settings/SettingsScreenContainer';
+import { SettingsSidebar } from '../../components/settings/SettingsSidebar';
 
-export const SettingsScreen: React.FC = () => {
+export default function SettingsScreen() {
 	return (
-		<SettingsScreenContainer>
-			<SettingsHeading className="!mt-0">Client</SettingsHeading>
-			<SidebarLink to="/settings/general">
-				<SettingsIcon component={CogIcon} />
-				General
-			</SidebarLink>
-			<SidebarLink to="/settings/libraries">
-				<SettingsIcon component={CollectionIcon} />
-				Libraries
-			</SidebarLink>
-			<SidebarLink to="/settings/privacy">
-				<SettingsIcon component={ShieldCheckIcon} />
-				Privacy
-			</SidebarLink>
-			<SidebarLink to="/settings/appearance">
-				<SettingsIcon component={PaintBrush} />
-				Appearance
-			</SidebarLink>
-			<SidebarLink to="/settings/keybinds">
-				<SettingsIcon component={KeyReturn} />
-				Keybinds
-			</SidebarLink>
-			<SidebarLink to="/settings/extensions">
-				<SettingsIcon component={PuzzlePiece} />
-				Extensions
-			</SidebarLink>
-
-			<SettingsHeading>Library</SettingsHeading>
-			<SidebarLink to="/settings/library">
-				<SettingsIcon component={CogIcon} />
-				General
-			</SidebarLink>
-			<SidebarLink to="/settings/nodes">
-				<SettingsIcon component={ShareNetwork} />
-				Nodes
-			</SidebarLink>
-			<SidebarLink to="/settings/locations">
-				<SettingsIcon component={HardDrive} />
-				Locations
-			</SidebarLink>
-			<SidebarLink to="/settings/tags">
-				<SettingsIcon component={TagIcon} />
-				Tags
-			</SidebarLink>
-			<SidebarLink to="/settings/keys">
-				<SettingsIcon component={KeyIcon} />
-				Keys
-			</SidebarLink>
-			{/* <SidebarLink to="/settings/backups">
-				<SettingsIcon component={DatabaseIcon} />
-				Backups
-			</SidebarLink>
-			<SidebarLink to="/settings/backups">
-				<SettingsIcon component={ShareNetwork} />
-				Sync
-			</SidebarLink> */}
-			{/* <SettingsHeading>Advanced</SettingsHeading>
-			<SidebarLink to="/settings/p2p">
-				<SettingsIcon component={ShareNetwork} />
-				Networking
-			</SidebarLink>
-			<SidebarLink to="/settings/experimental">
-				<SettingsIcon component={TerminalIcon} />
-				Developer
-			</SidebarLink> */}
-
-			<SettingsHeading>Resources</SettingsHeading>
-			<SidebarLink to="/settings/about">
-				<SettingsIcon component={FlyingSaucer} />
-				About
-			</SidebarLink>
-			<SidebarLink to="/settings/changelog">
-				<SettingsIcon component={AnnotationIcon} />
-				Changelog
-			</SidebarLink>
-			<SidebarLink to="/settings/support">
-				<SettingsIcon component={HeartIcon} />
-				Support
-			</SidebarLink>
-		</SettingsScreenContainer>
+		<div className="flex flex-row w-full app-background">
+			<SettingsSidebar />
+			<div className="w-full">
+				<Suspense>
+					<Outlet />
+				</Suspense>
+			</div>
+		</div>
 	);
-};
+}

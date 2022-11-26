@@ -1,5 +1,11 @@
-export * from './bridge';
-export * from './ClientProvider';
-export * from './stores';
+declare global {
+	var isDev: boolean;
+}
+
+if (globalThis.localStorage === undefined || globalThis.isDev === undefined)
+	throw new Error('Please ensure you have patched `globalThis` before importing `@sd/client`!');
+
 export * from './hooks';
-export * from './context';
+export * from './stores';
+export * from './rspc';
+export * from './core';

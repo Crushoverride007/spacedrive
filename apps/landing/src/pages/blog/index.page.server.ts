@@ -1,4 +1,4 @@
-import { getPosts } from './api';
+import { blogEnabled, getPosts } from './blog';
 
 export async function onBeforeRender() {
 	const posts = await getPosts();
@@ -15,15 +15,16 @@ export async function onBeforeRender() {
 export async function prerender() {
 	const posts = await getPosts();
 
-	const postPages = posts.map((post) => ({
+	const individualPosts = posts.map((post) => ({
 		url: `/blog/${post.slug}`,
 		pageContext: { pageProps: { post } }
 	}));
 
-	const postListPage = {
-		url: '/blog',
-		pageContext: { pageProps: { posts } }
-	};
-
-	return [postListPage, ...postPages];
+	return [
+		...individualPosts,
+		{
+			url: '/blog',
+			pageContext: { pageProps: { posts } }
+		}
+	];
 }

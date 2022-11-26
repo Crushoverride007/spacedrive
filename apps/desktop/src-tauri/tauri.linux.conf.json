@@ -6,7 +6,7 @@
 	"build": {
 		"distDir": "../dist",
 		"devPath": "http://localhost:8001",
-		"beforeDevCommand": "pnpm exec vite --clearScreen=false",
+		"beforeDevCommand": "pnpm exec vite --clearScreen=false --mode development",
 		"beforeBuildCommand": "pnpm exec vite build"
 	},
 	"tauri": {
@@ -78,7 +78,7 @@
 			}
 		],
 		"security": {
-			"csp": "default-src asset: blob: data: filesystem: ws: wss: http: https: tauri: 'unsafe-eval' 'unsafe-inline' 'self' img-src: 'self'"
+			"csp": "default-src spacedrive: asset: https://asset.localhost blob: data: filesystem: ws: wss: http: https: tauri: 'unsafe-eval' 'unsafe-inline' 'self' img-src: 'self'"
 		}
 	}
 }

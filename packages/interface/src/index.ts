@@ -1,7 +1,6 @@
-import { AppProps, Platform } from '@sd/client';
+import SpacedriveInterface from './App';
 
-import App from './App';
+export { KeybindEvent } from './util/keybind';
+export * from './util/Platform';
 
-export type { AppProps, Platform };
-
-export default App;
+export default SpacedriveInterface;

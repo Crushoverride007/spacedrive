@@ -9,28 +9,26 @@ default-run = "spacedrive"
 edition = "2021"
 build = "build.rs"
 
-[build-dependencies]
-tauri-build = { version = "1.0.0", features = [] }
-
 [dependencies]
-# Project dependencies
-tauri = { version = "1.0.0", features = ["api-all", "macos-private-api"] }
-sdcore = { path = "../../../core" }
-# tauri-plugin-shadows = { git = "https://github.com/tauri-apps/tauri-plugin-shadows", features = ["tauri-impl"] }
+tauri = { version = "1.1.1", features = ["api-all", "macos-private-api"] }
+rspc = { workspace = true, features = ["tauri"] }
+sd-core = { path = "../../../core", features = ["ffmpeg"] }
+tokio = { version = "1.21.2", features = ["sync"] }
+window-shadows = "0.2.0"
+tracing = "0.1.36"
+serde = "1.0.145"
 
-# Universal Dependencies
-tokio = { version = "1.17.0", features = ["sync"] }
-window-shadows = "0.1.2"
-env_logger = "0.9.0"
-dotenvy = "0.15.1"
-
-# macOS system libs
 [target.'cfg(target_os = "macos")'.dependencies]
 swift-rs = { git = "https://github.com/Brendonovich/swift-rs.git", branch = "autorelease" }
 
+[build-dependencies]
+tauri-build = { version = "1.1.1", features = [] }
+
 [target.'cfg(target_os = "macos")'.build-dependencies]
-swift-rs = { git = "https://github.com/Brendonovich/swift-rs.git", branch = "autorelease", features = ["build"] }
+swift-rs = { git = "https://github.com/Brendonovich/swift-rs.git", branch = "autorelease", features = [
+  "build",
+] }
 
 [features]
-default = [ "custom-protocol" ]
-custom-protocol = [ "tauri/custom-protocol" ]
+default = ["custom-protocol"]
+custom-protocol = ["tauri/custom-protocol"]

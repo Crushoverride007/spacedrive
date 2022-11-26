@@ -1,6 +1,7 @@
 node_modules
 .next
 dist
+!apps/desktop/dist
 *.tsbuildinfo
 package-lock.json
 .eslintcache
@@ -15,7 +16,6 @@ storybook-static/
 cache
 .env
 vendor/
-dist
 data
 node_modules
 packages/turbo-server/data/
@@ -23,6 +23,7 @@ packages/turbo-server/uploads/
 packages/*/node_modules
 packages/*/data
 apps/*/data
+apps/*/stats.html
 docs/public/*.st
 docs/public/*.toml
 dev.db
@@ -60,5 +61,8 @@ yalc.lock
 todos.md
 examples/*/*.lock
 /target
+/core/src/prisma.rs
 
 /sdserver_data
+.spacedrive
+dev.db-journal

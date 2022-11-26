@@ -1,8 +1,6 @@
-import { SearchIcon } from '@heroicons/react/solid';
-import { Button, Input } from '@sd/ui';
-import React from 'react';
+import { Button, Card, GridLayout, Input } from '@sd/ui';
+import { MagnifyingGlass } from 'phosphor-react';
 
-import { InputContainer } from '../../../components/primitive/InputContainer';
 import { SettingsContainer } from '../../../components/settings/SettingsContainer';
 import { SettingsHeader } from '../../../components/settings/SettingsHeader';
 
@@ -47,13 +45,14 @@ function ExtensionItem(props: { extension: ExtensionItemData }) {
 	const { installed, name, description } = props.extension;
 
 	return (
-		<div className="flex flex-col w-[290px] px-4 py-4 bg-gray-600 border border-gray-500 rounded">
-			<h3 className="m-0 text-sm font-bold">{name}</h3>
-			<p className="mt-1 mb-1 text-xs text-gray-300 ">{description}</p>
-			<Button size="sm" className="mt-2" variant={installed ? 'gray' : 'primary'}>
+		<Card className="flex-col">
+			<h3 className="mt-2 text-sm font-bold">{name}</h3>
+			<p className="mt-1 mb-1 text-xs text-gray-300">{description}</p>
+			<div className="flex-grow" />
+			<Button size="sm" className="my-2" variant={installed ? 'gray' : 'accent'}>
 				{installed ? 'Installed' : 'Install'}
 			</Button>
-		</div>
+		</Card>
 	);
 }
 
@@ -67,17 +66,17 @@ export default function ExtensionSettings() {
 				description="Install extensions to extend the functionality of this client."
 				rightArea={
 					<div className="relative mt-6">
-						<SearchIcon className="absolute w-[18px] h-auto top-[8px] left-[11px] text-gray-350" />
+						<MagnifyingGlass className="absolute w-[18px] h-auto top-[8px] left-[11px] text-gray-350" />
 						<Input className="w-56 !p-0.5 !pl-9" placeholder="Search extensions" />
 					</div>
 				}
 			/>
 
-			<div className="flex flex-wrap gap-3">
+			<GridLayout>
 				{extensions.map((extension) => (
 					<ExtensionItem key={extension.uuid} extension={extension} />
 				))}
-			</div>
+			</GridLayout>
 		</SettingsContainer>
 	);
 }

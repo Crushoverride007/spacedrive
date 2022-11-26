@@ -1,7 +1,4 @@
 {
-	"extends": "../config/interface.tsconfig.json",
-	"compilerOptions": {
-		"outDir": "./dist"
-	},
+	"extends": "@sd/config/interface.tsconfig.json",
 	"include": ["src"]
 }

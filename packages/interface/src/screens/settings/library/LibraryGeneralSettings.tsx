@@ -1,60 +1,26 @@
-import { useBridgeCommand, useBridgeQuery } from '@sd/client';
+import { useBridgeMutation } from '@sd/client';
 import { useCurrentLibrary } from '@sd/client';
-import { Button, Input } from '@sd/ui';
-import React, { useCallback, useEffect, useState } from 'react';
-import { useDebounce } from 'use-debounce';
+import { Button, Input, Switch } from '@sd/ui';
+import { useForm } from 'react-hook-form';
 
-import { Toggle } from '../../../components/primitive';
 import { InputContainer } from '../../../components/primitive/InputContainer';
 import { SettingsContainer } from '../../../components/settings/SettingsContainer';
 import { SettingsHeader } from '../../../components/settings/SettingsHeader';
+import { useDebouncedForm } from '../../../hooks/useDebouncedForm';
 
 export default function LibraryGeneralSettings() {
-	const { currentLibrary, libraries, currentLibraryUuid } = useCurrentLibrary();
-
-	const { mutate: editLibrary } = useBridgeCommand('EditLibrary');
-
-	const [name, setName] = useState('');
-	const [description, setDescription] = useState('');
-	const [encryptLibrary, setEncryptLibrary] = useState(false);
-	// prevent auto update when switching library
-	const [blockAutoUpdate, setBlockAutoUpdate] = useState(false);
-
-	const [nameDebounced] = useDebounce(name, 500);
-	const [descriptionDebounced] = useDebounce(description, 500);
-
-	useEffect(() => {
-		if (currentLibrary) {
-			const { name, description } = currentLibrary.config;
-			// currentLibrary must be loaded, name must not be empty, and must be different from the current
-			if (nameDebounced && (nameDebounced !== name || descriptionDebounced !== description)) {
-				editLibrary({
-					id: currentLibraryUuid!,
-					name: nameDebounced,
-					description: descriptionDebounced
-				});
-			}
-		}
-	}, [nameDebounced, descriptionDebounced]);
-
-	useEffect(() => {
-		if (currentLibrary) {
-			setName(currentLibrary.config.name);
-			setDescription(currentLibrary.config.description);
-		}
-	}, [libraries]);
-
-	useEffect(() => {
-		if (currentLibrary) {
-			setBlockAutoUpdate(true);
-			setName(currentLibrary.config.name);
-			setDescription(currentLibrary.config.description);
-		}
-	}, [currentLibraryUuid]);
-
-	useEffect(() => {
-		if (blockAutoUpdate) setBlockAutoUpdate(false);
-	}, [blockAutoUpdate]);
+	const { library } = useCurrentLibrary();
+	const { mutate: editLibrary } = useBridgeMutation('library.edit');
+	const form = useForm({
+		defaultValues: { id: library!.uuid, ...library?.config }
+	});
+	useDebouncedForm(form, (value) =>
+		editLibrary({
+			id: library!.uuid,
+			name: value.name,
+			description: value.description
+		})
+	);
 
 	return (
 		<SettingsContainer>
@@ -64,22 +30,12 @@ export default function LibraryGeneralSettings() {
 			/>
 			<div className="flex flex-row pb-3 space-x-5">
 				<div className="flex flex-col flex-grow">
-					<span className="mb-1 text-sm font-medium text-gray-700 dark:text-gray-100">Name</span>
-					<Input
-						value={name}
-						onChange={(e) => setName(e.target.value)}
-						defaultValue="My Default Library"
-					/>
+					<span className="mb-1 text-sm font-medium">Name</span>
+					<Input {...form.register('name', { required: true })} defaultValue="My Default Library" />
 				</div>
 				<div className="flex flex-col flex-grow">
-					<span className="mb-1 text-sm font-medium text-gray-700 dark:text-gray-100">
-						Description
-					</span>
-					<Input
-						value={description}
-						onChange={(e) => setDescription(e.target.value)}
-						placeholder=""
-					/>
+					<span className="mb-1 text-sm font-medium">Description</span>
+					<Input {...form.register('description')} placeholder="" />
 				</div>
 			</div>
 
@@ -89,7 +45,7 @@ export default function LibraryGeneralSettings() {
 				description="Enable encryption for this library, this will only encrypt the Spacedrive database, not the files themselves."
 			>
 				<div className="flex items-center ml-3">
-					<Toggle value={encryptLibrary} onChange={setEncryptLibrary} />
+					<Switch checked={false} />
 				</div>
 			</InputContainer>
 			<InputContainer mini title="Export Library" description="Export this library to a file.">

@@ -1,7 +1,5 @@
-import React from 'react';
+import { ReactComponent as ArrowRight } from '@sd/assets/svgs/arrow-right.svg';
 import { Helmet } from 'react-helmet';
-
-import { ReactComponent as ArrowRight } from '@sd/interface/assets/svg/arrow-right.svg';
 
 import Markdown from '../components/Markdown';
 import { TeamMember, TeamMemberProps } from '../components/TeamMember';
@@ -23,7 +21,7 @@ const teamMembers: Array<TeamMemberProps> = [
 	},
 	{
 		name: 'Brendan Allan',
-		role: 'Rust Backend Engineer',
+		role: 'Rust Engineer',
 		image: teamImages['brendan.jpg'],
 		socials: {
 			twitter: 'https://twitter.com/brendonovichdev',
@@ -33,12 +31,29 @@ const teamMembers: Array<TeamMemberProps> = [
 	},
 	{
 		name: 'Oscar Beaumont',
-		role: 'Rust Backend Engineer',
+		role: 'Rust Engineer',
 		image: teamImages['oscar.jpg'],
 		socials: {
 			twitter: 'https://twitter.com/oscartbeaumont',
 			twitch: 'https://twitch.tv/oscartbeaumont',
 			github: 'https://github.com/oscartbeaumont'
+		}
+	},
+	{
+		name: 'Ericson Soares',
+		role: 'Rust Engineer',
+		image: teamImages['ericson.jpg'],
+		socials: {
+			twitter: 'https://twitter.com/fogodev',
+			github: 'https://github.com/fogodev'
+		}
+	},
+	{
+		name: 'Utku Bakir',
+		role: 'React Native Engineer',
+		image: teamImages['utku.jpg'],
+		socials: {
+			github: 'https://github.com/utkubakir'
 		}
 	},
 	{
@@ -52,18 +67,25 @@ const teamMembers: Array<TeamMemberProps> = [
 		}
 	},
 	{
-		name: 'Benjamin Akar',
-		role: 'Engineer & Designer',
-		image: teamImages['benja.jpg'],
+		name: 'Jake Robinson',
+		role: 'Rust Engineer',
+		image: teamImages['jake.jpg'],
 		socials: {
-			twitter: 'https://twitter.com/benjaminakar',
-			twitch: 'https://twitch.tv/akawr',
-			github: 'https://github.com/benja'
+			github: 'https://github.com/brxken128'
+		}
+	},
+	{
+		name: 'Mihail Dounaev',
+		role: 'Graphic Designer',
+		image: teamImages['mihail.jpg'],
+		socials: {
+			twitter: 'https://twitter.com/mmmintdesign',
+			dribbble: 'https://dribbble.com/mmmint'
 		}
 	},
 	{
 		name: 'Haris Mehrzad',
-		role: 'Engineer Intern',
+		role: 'Software Engineer',
 		image: teamImages['haris.jpg'],
 		socials: {
 			twitter: 'https://twitter.com/xPolarrr',
@@ -186,12 +208,12 @@ const investors: Array<TeamMemberProps> = [
 
 function Page() {
 	return (
-		<Markdown>
+		<Markdown articleClassNames="mx-auto mt-32 prose-a:text-white">
 			<Helmet>
 				<title>Our Team - Spacedrive</title>
 				<meta name="description" content="Who's behind Spacedrive?" />
 			</Helmet>
-			<div className="relative team-page">
+			<div className="relative mx-auto team-page">
 				<div
 					className="bloom subtle egg-bloom-one -top-60 -right-[400px]"
 					style={{ transform: 'scale(2)' }}
@@ -200,17 +222,17 @@ function Page() {
 					<h1 className="text-5xl leading-tight sm:leading-snug fade-in-heading ">
 						We believe file management should be <span className="title-gradient">universal</span>.
 					</h1>
-					<p className="text-gray-400 animation-delay-2 fade-in-heading ">
+					<p className="text-white/50 animation-delay-2 fade-in-heading ">
 						Your priceless personal data shouldn't be stuck in a device ecosystem. It should be OS
 						agnostic, permanent and owned by you.
 					</p>
-					<p className="text-gray-400 animation-delay-2 fade-in-heading ">
+					<p className="text-white/50 animation-delay-2 fade-in-heading ">
 						The data we create daily is our legacy—that will long outlive us. Open source technology
 						is the only way to ensure we retain absolute control over the files that define our
 						lives, at unlimited scale.
 					</p>
 					<a
-						href="/faq"
+						href="/docs/product/resources/faq"
 						className="flex flex-row items-center text-gray-400 duration-150 animation-delay-3 fade-in-heading hover:text-white text-underline underline-offset-4"
 					>
 						<ArrowRight className="mr-2" />
@@ -228,7 +250,7 @@ function Page() {
 							<a
 								href="https://github.com/spacedriveapp/spacedrive/graphs/contributors"
 								target="_blank"
-								rel="noreferer"
+								rel="noreferrer"
 								className="duration-200 oss-credit-gradient hover:opacity-75"
 							>
 								open source contributors
@@ -253,4 +275,4 @@ function Page() {
 	);
 }
 
-export default Page;
+export { Page };

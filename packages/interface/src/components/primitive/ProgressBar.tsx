@@ -1,5 +1,4 @@
 import * as ProgressPrimitive from '@radix-ui/react-progress';
-import React, { useEffect } from 'react';
 
 interface Props {
 	value: number;
@@ -15,7 +14,7 @@ const ProgressBar = (props: Props) => {
 		>
 			<ProgressPrimitive.Indicator
 				style={{ width: `${percentage}%` }}
-				className="h-full duration-300 ease-in-out bg-primary "
+				className="h-full duration-300 ease-in-out bg-accent "
 			/>
 		</ProgressPrimitive.Root>
 	);

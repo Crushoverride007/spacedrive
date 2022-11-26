@@ -1,20 +1,12 @@
-import { LockClosedIcon } from '@heroicons/react/solid';
-import { Input } from '@sd/ui';
-import React from 'react';
-
-export const ContentScreen: React.FC<{}> = (props) => {
-	const [address, setAddress] = React.useState('');
+export default function ContentScreen() {
 	return (
-		<div className="flex flex-col w-full h-screen p-5 custom-scroll page-scroll">
-			{/* <div className="relative flex flex-col space-y-5 pb-7">
-				<LockClosedIcon className="absolute w-4 h-4 ml-3 text-gray-250 top-[30px]" />
-				<Input
-					className="pl-9"
-					placeholder="0f2z49zA"
-					value={address}
-					onChange={(e) => setAddress(e.target.value)}
-				/>
-			</div> */}
+		<div className="flex flex-col w-full h-screen p-5 custom-scroll page-scroll app-background">
+			<div className="flex flex-col space-y-5 pb-7">
+				<p className="px-5 py-3 mb-3 text-sm border rounded-md shadow-sm border-app-line bg-app-box ">
+					<b>Note: </b>This is a pre-alpha build of Spacedrive, many features are yet to be
+					functional.
+				</p>
+			</div>
 		</div>
 	);
-};
+}

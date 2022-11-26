@@ -10,20 +10,21 @@
 		"inlineSources": false,
 		"isolatedModules": false,
 		"module": "ESNext",
-		"target": "ES6",
+		"target": "ESNext",
 		"moduleResolution": "node",
 		"noUnusedLocals": false,
 		"noUnusedParameters": false,
 		"preserveWatchOutput": true,
-		"skipLibCheck": false,
+		"skipLibCheck": true,
 		"strict": true,
 		"allowSyntheticDefaultImports": true,
 		"resolveJsonModule": true,
-		"jsx": "react",
+		"jsx": "react-jsx",
 		"paths": {
 			"@sd/interface": ["../../packages/interface"],
 			"@sd/ui": ["../../packages/ui"],
-			"@sd/client": ["../../packages/client"]
+			"@sd/client": ["../../packages/client"],
+			"@sd/assets": ["../../packages/assets"]
 		}
 	},
 	"exclude": ["node_modules"]

@@ -1,14 +1,12 @@
-import { TrashIcon } from '@heroicons/react/outline';
-import { useLibraryCommand, useLibraryQuery } from '@sd/client';
-import { Button, Input } from '@sd/ui';
+import { Tag, useLibraryMutation, useLibraryQuery } from '@sd/client';
+import { TagUpdateArgs } from '@sd/client';
+import { Button, Card, Dialog, Input, Switch } from '@sd/ui';
 import clsx from 'clsx';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Trash } from 'phosphor-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useDebounce } from 'rooks';
 
-import Card from '../../../components/layout/Card';
-import Dialog from '../../../components/layout/Dialog';
-import { Toggle } from '../../../components/primitive';
 import { InputContainer } from '../../../components/primitive/InputContainer';
 import { PopoverPicker } from '../../../components/primitive/PopoverPicker';
 import { SettingsContainer } from '../../../components/settings/SettingsContainer';
@@ -16,46 +14,46 @@ import { SettingsHeader } from '../../../components/settings/SettingsHeader';
 
 export default function TagsSettings() {
 	const [openCreateModal, setOpenCreateModal] = useState(false);
+	const [openDeleteModal, setOpenDeleteModal] = useState(false);
 	// creating new tag state
 	const [newColor, setNewColor] = useState('#A717D9');
 	const [newName, setNewName] = useState('');
 
-	const { data: tags } = useLibraryQuery('GetTags');
+	const { data: tags } = useLibraryQuery(['tags.list']);
 
-	const [selectedTag, setSelectedTag] = useState<null | number>(null);
+	const [selectedTag, setSelectedTag] = useState<null | Tag>(tags?.[0] ?? null);
 
-	const currentTag = useMemo(() => {
-		return tags?.find((t) => t.id === selectedTag);
-	}, [tags, selectedTag]);
-
-	const { mutate: createTag, isLoading } = useLibraryCommand('TagCreate', {
+	const { mutate: createTag, isLoading } = useLibraryMutation('tags.create', {
 		onError: (e) => {
-			console.log('error', e);
+			console.error('error', e);
 		},
-		onSuccess: (data) => {
+		onSuccess: (_) => {
 			setOpenCreateModal(false);
 		}
 	});
 
-	const { mutate: updateTag, isLoading: tagUpdateLoading } = useLibraryCommand('TagUpdate');
+	const updateTag = useLibraryMutation('tags.update');
 
-	const { mutate: deleteTag, isLoading: tagDeleteLoading } = useLibraryCommand('TagDelete');
-
-	// set default selected tag
-	useEffect(() => {
-		if (!currentTag && tags?.length) {
-			setSelectedTag(tags[0].id);
+	const deleteTag = useLibraryMutation('tags.delete', {
+		onSuccess: () => {
+			setSelectedTag(null);
 		}
-	}, [tags]);
+	});
 
-	useEffect(() => {
-		reset(currentTag);
-	}, [currentTag]);
+	const { register, handleSubmit, watch, reset, control } = useForm({
+		defaultValues: selectedTag as TagUpdateArgs
+	});
 
-	const { register, handleSubmit, watch, reset, control } = useForm({ defaultValues: currentTag });
+	const setTag = useCallback(
+		(tag: Tag | null) => {
+			if (tag) reset(tag);
+			setSelectedTag(tag);
+		},
+		[setSelectedTag, reset]
+	);
 
-	const submitTagUpdate = handleSubmit((data) => updateTag(data));
-
+	const submitTagUpdate = handleSubmit((data) => updateTag.mutate(data));
+	// eslint-disable-next-line react-hooks/exhaustive-deps
 	const autoUpdateTag = useCallback(useDebounce(submitTagUpdate, 500), []);
 
 	useEffect(() => {
@@ -72,7 +70,7 @@ export default function TagsSettings() {
 					<div className="flex-row space-x-2">
 						<Dialog
 							open={openCreateModal}
-							onOpenChange={setOpenCreateModal}
+							setOpen={setOpenCreateModal}
 							title="Create New Tag"
 							description="Choose a name and color."
 							ctaAction={() => {
@@ -84,7 +82,7 @@ export default function TagsSettings() {
 							loading={isLoading}
 							ctaLabel="Create"
 							trigger={
-								<Button variant="primary" size="sm">
+								<Button variant="accent" size="sm">
 									Create Tag
 								</Button>
 							}
@@ -106,16 +104,15 @@ export default function TagsSettings() {
 					</div>
 				}
 			/>
-
-			<Card className="!px-2 dark:bg-gray-800">
+			<Card className="!px-2">
 				<div className="flex flex-wrap gap-2 m-1">
 					{tags?.map((tag) => (
 						<div
-							onClick={() => setSelectedTag(tag.id === selectedTag ? null : tag.id)}
+							onClick={() => setTag(tag.id === selectedTag?.id ? null : tag)}
 							key={tag.id}
 							className={clsx(
 								'flex items-center rounded px-1.5 py-0.5',
-								selectedTag == tag.id && 'ring'
+								selectedTag?.id === tag.id && 'ring'
 							)}
 							style={{ backgroundColor: tag.color + 'CC' }}
 						>
@@ -124,7 +121,7 @@ export default function TagsSettings() {
 					))}
 				</div>
 			</Card>
-			{currentTag ? (
+			{selectedTag ? (
 				<form onSubmit={submitTagUpdate}>
 					<div className="flex flex-row mb-10 space-x-3">
 						<div className="flex flex-col">
@@ -143,29 +140,30 @@ export default function TagsSettings() {
 										/>
 									)}
 								/>
-
 								<Input className="w-28 pl-[40px]" {...register('color')} />
 							</div>
 						</div>
-						<div className="flex flex-col ">
+						<div className="flex flex-col">
 							<span className="mb-1 text-sm font-medium text-gray-700 dark:text-gray-100">
 								Name
 							</span>
 							<Input {...register('name')} />
 						</div>
-						<div className="flex flex-grow"></div>
+						<div className="flex flex-grow" />
 						<Dialog
+							open={openDeleteModal}
+							setOpen={setOpenDeleteModal}
 							title="Delete Tag"
 							description="Are you sure you want to delete this tag? This cannot be undone and tagged files will be unlinked."
 							ctaAction={() => {
-								deleteTag({ id: currentTag.id });
+								deleteTag.mutate(selectedTag.id);
 							}}
-							loading={tagDeleteLoading}
+							loading={deleteTag.isLoading}
 							ctaDanger
 							ctaLabel="Delete"
 							trigger={
 								<Button variant="gray" className="h-[38px] mt-[22px]">
-									<TrashIcon className="w-4 h-4" />
+									<Trash className="w-4 h-4" />
 								</Button>
 							}
 						/>
@@ -175,7 +173,7 @@ export default function TagsSettings() {
 						title="Show in Spaces"
 						description="Show this tag on the spaces screen."
 					>
-						<Toggle value />
+						<Switch checked />
 					</InputContainer>
 				</form>
 			) : (
