@@ -1,6 +1,6 @@
 packages:
   - 'packages/*'
   - 'apps/*'
-  - 'core'
-  - 'crates/sync/example/web'
-  - 'docs'
+  - 'interface'
+  - 'scripts'
+  - '.github/actions/*'

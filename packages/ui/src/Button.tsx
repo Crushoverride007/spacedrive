@@ -1,8 +1,11 @@
-import { VariantProps, cva, cx } from 'class-variance-authority';
-import { forwardRef } from 'react';
-import { Link, LinkProps } from 'react-router-dom';
+'use client';
 
-export interface ButtonBaseProps extends VariantProps<typeof styles> {}
+import { cva, cx, VariantProps } from 'class-variance-authority';
+import clsx from 'clsx';
+import { ComponentProps, forwardRef } from 'react';
+import { Link } from 'react-router-dom';
+
+export type ButtonBaseProps = VariantProps<typeof buttonStyles>;
 
 export type ButtonProps = ButtonBaseProps &
 	React.ButtonHTMLAttributes<HTMLButtonElement> & {
@@ -21,42 +24,55 @@ type Button = {
 
 const hasHref = (props: ButtonProps | LinkButtonProps): props is LinkButtonProps => 'href' in props;
 
-const styles = cva(
-	'border rounded-md items-center transition-colors duration-100 cursor-default disabled:opacity-50',
+export const buttonStyles = cva(
+	[
+		'cursor-default items-center rounded-md border font-plex font-semibold tracking-wide outline-none transition-colors duration-100',
+		'disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-70',
+		'focus:ring-none focus:ring-offset-none cursor-pointer ring-offset-app-box'
+	],
 	{
 		variants: {
-			pressEffect: {
-				true: 'active:translate-y-[1px]'
-			},
-			disabled: {
-				true: 'opacity-70 pointer-events-none cursor-not-allowed'
-			},
 			size: {
 				icon: '!p-1',
-				md: 'py-1 px-3 text-md font-medium',
-				sm: 'py-1 px-2 text-sm font-medium'
+				lg: 'text-md px-3 py-1.5 font-medium',
+				md: 'px-2.5 py-1.5 text-sm font-medium',
+				sm: 'px-2 py-1 text-sm font-medium',
+				xs: 'px-1.5 py-0.5 text-xs font-normal'
 			},
 			variant: {
 				default: [
-					'bg-app-button bg-transparent active:bg-app-selected hover:bg-app-hover',
+					'bg-transparent hover:bg-app-hover active:bg-app-selected',
 					'border-transparent hover:border-app-line active:border-app-line'
 				],
-				outline: [
+				subtle: [
 					'border-transparent hover:border-app-line/50 active:border-app-line active:bg-app-box/30'
 				],
+				outline: [
+					'border-sidebar-line/60 hover:border-sidebar-line active:border-sidebar-line/30'
+				],
+				dotted: [
+					`rounded border border-dashed border-sidebar-line/70 text-center text-xs font-medium text-ink-faint transition hover:border-sidebar-line hover:bg-sidebar-selected/5`
+				],
 				gray: [
-					'bg-app-button active:bg-app-selected hover:bg-app-hover',
-					'border-app-line hover:border-app-line active:border-app-active'
+					'bg-app-button hover:bg-app-hover focus:bg-app-selected',
+					'border-app-line hover:border-app-line focus:ring-1 focus:ring-accent'
 				],
 				accent: [
-					'bg-accent text-white active:bg-accent hover:bg-accent-faint border-accent-deep hover:border-accent active:border-accent-deep shadow-md shadow-app-shade/10'
+					'border border-accent bg-accent text-white shadow-md shadow-app-shade/10 hover:bg-accent-faint focus:outline-none',
+					'focus:ring-1 focus:ring-accent focus:ring-offset-2 focus:ring-offset-app-selected'
 				],
 				colored: ['text-white shadow-sm hover:bg-opacity-90 active:bg-opacity-100'],
 				bare: ''
+			},
+			rounding: {
+				none: 'rounded-none',
+				left: 'rounded-l-md rounded-r-none',
+				right: 'rounded-l-none rounded-r-md',
+				both: 'rounded-md'
 			}
 		},
 		defaultVariants: {
-			size: 'md',
+			size: 'sm',
 			variant: 'default'
 		}
 	}
@@ -66,27 +82,30 @@ export const Button = forwardRef<
 	HTMLButtonElement | HTMLAnchorElement,
 	ButtonProps | LinkButtonProps
 >(({ className, ...props }, ref) => {
-	className = cx(styles(props), className);
+	className = cx(buttonStyles(props), className);
 	return hasHref(props) ? (
-		<a {...props} ref={ref as any} className={cx(className, 'no-underline inline-block')} />
+		<a {...props} ref={ref as any} className={cx(className, 'inline-block no-underline')} />
 	) : (
-		<button {...(props as ButtonProps)} ref={ref as any} className={className} />
+		<button type="button" {...(props as ButtonProps)} ref={ref as any} className={className} />
 	);
 });
 
 export const ButtonLink = forwardRef<
-	HTMLLinkElement,
-	ButtonBaseProps & LinkProps & React.RefAttributes<HTMLAnchorElement>
->(({ className, to, ...props }, ref) => {
-	className = cx(
-		styles(props),
-		'no-underline disabled:opacity-50 disabled:cursor-not-allowed',
-		className
-	);
-
+	HTMLAnchorElement,
+	ButtonBaseProps & ComponentProps<typeof Link>
+>(({ className, size, variant, ...props }, ref) => {
 	return (
-		<Link to={to} ref={ref as any} className={className}>
-			{props.children}
-		</Link>
+		<Link
+			ref={ref}
+			className={buttonStyles({
+				size,
+				variant,
+				className: clsx(
+					'no-underline disabled:cursor-not-allowed disabled:opacity-50',
+					className
+				)
+			})}
+			{...props}
+		/>
 	);
 });

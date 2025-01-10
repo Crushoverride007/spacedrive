@@ -1,37 +1,96 @@
 import { CompositeScreenProps } from '@react-navigation/native';
-import { StackScreenProps, createStackNavigator } from '@react-navigation/stack';
+import { createNativeStackNavigator, NativeStackScreenProps } from '@react-navigation/native-stack';
+import DynamicHeader from '~/components/header/DynamicHeader';
 import Header from '~/components/header/Header';
-import tw from '~/lib/tailwind';
-import BrowseScreen from '~/screens/Browse';
+import SearchHeader from '~/components/header/SearchHeader';
+import BrowseScreen from '~/screens/browse/Browse';
+import LibraryScreen from '~/screens/browse/Library';
+import LocationScreen from '~/screens/browse/Location';
+import LocationsScreen from '~/screens/browse/Locations';
+import TagScreen from '~/screens/browse/Tag';
+import TagsScreen from '~/screens/browse/Tags';
 
-import { SharedScreens, SharedScreensParamList } from '../SharedScreens';
 import { TabScreenProps } from '../TabNavigator';
 
-const Stack = createStackNavigator<BrowseStackParamList>();
+const Stack = createNativeStackNavigator<BrowseStackParamList>();
 
 export default function BrowseStack() {
 	return (
 		<Stack.Navigator
-			initialRouteName="Browse"
 			screenOptions={{
-				headerStyle: { backgroundColor: tw.color('gray-650') },
-				headerTintColor: tw.color('gray-200'),
-				headerTitleStyle: tw`text-base`,
-				headerBackTitleStyle: tw`text-base`
+				fullScreenGestureEnabled: true
 			}}
+			initialRouteName="Browse"
 		>
-			<Stack.Screen name="Browse" component={BrowseScreen} options={{ header: Header }} />
-			{SharedScreens(Stack as any)}
+			<Stack.Screen
+				name="Browse"
+				component={BrowseScreen}
+				options={({ route }) => ({
+					header: () => <Header search route={route} />
+				})}
+			/>
+			<Stack.Screen
+				name="Location"
+				component={LocationScreen}
+				options={({ route: optionsRoute }) => ({
+					header: (route) => (
+						<DynamicHeader
+							optionsRoute={optionsRoute}
+							headerRoute={route}
+							kind="locations"
+						/>
+					)
+				})}
+			/>
+			<Stack.Screen
+				name="Tags"
+				component={TagsScreen}
+				options={({ route }) => ({
+					header: () => <SearchHeader kind="tags" route={route} />
+				})}
+			/>
+			<Stack.Screen
+				name="Locations"
+				component={LocationsScreen}
+				options={({ route }) => ({
+					header: () => <SearchHeader kind="locations" route={route} />
+				})}
+			/>
+			<Stack.Screen
+				name="Tag"
+				component={TagScreen}
+				options={({ route: optionsRoute }) => ({
+					header: (route) => (
+						<DynamicHeader
+							optionsRoute={optionsRoute}
+							headerRoute={route}
+							kind="tags"
+						/>
+					)
+				})}
+			/>
+			<Stack.Screen
+				name="Library"
+				component={LibraryScreen}
+				options={({ route }) => ({
+					header: () => <Header navBack route={route} />
+				})}
+			/>
 		</Stack.Navigator>
 	);
 }
 
 export type BrowseStackParamList = {
 	Browse: undefined;
-} & SharedScreensParamList;
+	Location: { id: number; path?: string; name?: string };
+	Locations: undefined;
+	Tag: { id: number; color: string };
+	Tags: undefined;
+	Library: undefined;
+};
 
 export type BrowseStackScreenProps<Screen extends keyof BrowseStackParamList> =
 	CompositeScreenProps<
-		StackScreenProps<BrowseStackParamList, Screen>,
+		NativeStackScreenProps<BrowseStackParamList, Screen>,
 		TabScreenProps<'BrowseStack'>
 	>;

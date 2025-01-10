@@ -1,31 +1,45 @@
-#![forbid(unsafe_code)]
-#![warn(clippy::pedantic)]
-#![warn(clippy::correctness)]
-#![warn(clippy::perf)]
-#![warn(clippy::style)]
-#![warn(clippy::suspicious)]
-#![warn(clippy::nursery)]
-#![warn(clippy::correctness)]
-#![allow(clippy::missing_panics_doc)]
-#![allow(clippy::missing_errors_doc)]
-#![allow(clippy::module_name_repetitions)]
-#![allow(clippy::similar_names)]
-#![allow(clippy::option_if_let_else)]
+#![doc = include_str!("../README.md")]
+#![warn(
+	clippy::all,
+	clippy::pedantic,
+	clippy::correctness,
+	clippy::perf,
+	clippy::style,
+	clippy::suspicious,
+	clippy::complexity,
+	clippy::nursery,
+	clippy::unwrap_used,
+	unused_qualifications,
+	rust_2018_idioms,
+	trivial_casts,
+	trivial_numeric_casts,
+	unused_allocation,
+	clippy::as_conversions,
+	clippy::dbg_macro,
+	clippy::deprecated_cfg_attr,
+	clippy::separated_literal_suffix,
+	deprecated
+)]
+#![forbid(unsafe_code, deprecated_in_future)]
+#![allow(
+	clippy::missing_errors_doc,
+	clippy::module_name_repetitions,
+	clippy::similar_names
+)]
 
-pub mod crypto;
+// pub mod crypto;
+pub mod cloud;
+pub mod ct;
+pub mod erase;
 pub mod error;
-pub mod header;
-pub mod keys;
 pub mod primitives;
 pub mod protected;
+pub mod rng;
 
-// Re-export this so that payloads can be generated elsewhere
-pub use aead::Payload;
-
-// Make this easier to use (e.g. `sd_crypto::Protected`)
+pub use error::Error;
 pub use protected::Protected;
+pub use rng::CryptoRng;
 
-// Re-export zeroize so it can be used elsewhere
-pub use zeroize::Zeroize;
+pub use rand_core::{RngCore, SeedableRng};
 
-pub use self::error::{Error, Result};
+pub mod cookie;

@@ -1,5 +1,6 @@
-import { resetStore } from '@sd/client';
 import { proxy, useSnapshot } from 'valtio';
+import { proxySet } from 'valtio/utils';
+import { resetStore, ThumbKey } from '@sd/client';
 
 export type ExplorerLayoutMode = 'list' | 'grid' | 'media';
 
@@ -11,25 +12,39 @@ export enum ExplorerKind {
 
 const state = {
 	locationId: null as number | null,
+	path: '',
 	layoutMode: 'grid' as ExplorerLayoutMode,
-	gridItemSize: 100,
-	listItemSize: 40,
-	newThumbnails: {} as Record<string, boolean>
+	toggleMenu: false as boolean,
+	// Using gridNumColumns instead of fixed size. We dynamically calculate the item size.
+	gridNumColumns: 3,
+	mediaColumns: 4,
+	listItemSize: 60,
+	newThumbnails: proxySet() as Set<string>,
+	// sorting
+	// we will display different sorting options based on the kind of explorer we are in
+	sortType: 'filePath' as 'filePath' | 'object' | 'ephemeral',
+	orderKey: 'name',
+	orderDirection: 'Asc' as 'Asc' | 'Desc'
 };
 
-// Keep the private and use `useExplorerState` or `getExplorerStore` or you will get production build issues. (Was the case for desktop. Not sure if it's still the case for mobile)
-const explorerStore = proxy({
+export function flattenThumbnailKey(thumbKey: ThumbKey) {
+	return `${thumbKey.base_directory_str}/${thumbKey.shard_hex}/${thumbKey.cas_id}`;
+}
+
+const store = proxy({
 	...state,
-	reset: () => resetStore(explorerStore, state),
-	addNewThumbnail: (cas_id: string) => {
-		explorerStore.newThumbnails[cas_id] = true;
+	reset: () => resetStore(store, state),
+	addNewThumbnail: (thumbKey: ThumbKey) => {
+		store.newThumbnails.add(flattenThumbnailKey(thumbKey));
+	},
+	// this should be done when the explorer query is refreshed
+	// prevents memory leak
+	resetNewThumbnails: () => {
+		store.newThumbnails.clear();
 	}
 });
 
-export function useExplorerStore() {
-	return useSnapshot(explorerStore);
-}
-
-export function getExplorerStore() {
-	return explorerStore;
-}
+/** for reading */
+export const useExplorerStore = () => useSnapshot(store);
+/** for writing */
+export const getExplorerStore = () => store;

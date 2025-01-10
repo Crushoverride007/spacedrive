@@ -1,22 +1,23 @@
-import { VariantProps, cva } from 'class-variance-authority';
+import { cva, VariantProps } from 'class-variance-authority';
 import { MotiPressable, MotiPressableProps } from 'moti/interactions';
 import { FC, useMemo } from 'react';
-import { Pressable, PressableProps } from 'react-native';
-import tw from '~/lib/tailwind';
+import { Pressable, PressableProps, View, ViewProps } from 'react-native';
+import { twStyle } from '~/lib/tailwind';
 
-const button = cva(['border rounded-md items-center justify-center shadow-sm'], {
+const button = cva(['items-center justify-center rounded-md border shadow-sm'], {
 	variants: {
 		variant: {
-			default: 'bg-gray-50 border-gray-100',
-			primary: ['bg-primary-600'],
-			danger: ['bg-red-600'],
-			gray: ['bg-gray-100 border-gray-200'],
-			dark_gray: ['bg-gray-500 border-gray-600']
+			danger: ['border-red-800 bg-red-600 shadow-none'],
+			gray: ['border-app-box bg-app shadow-none'],
+			darkgray: ['border-app-box bg-app shadow-none'],
+			accent: ['border-accent-deep bg-accent shadow-md shadow-app-shade/10'],
+			outline: ['border border-app-inputborder bg-transparent shadow-none'],
+			transparent: ['border-0 bg-transparent shadow-none'],
+			dashed: ['border border-dashed border-app-line bg-transparent shadow-none']
 		},
 		size: {
-			default: ['py-1', 'px-3'],
+			default: ['py-1.5', 'px-3'],
 			sm: ['py-1', 'px-2'],
-			md: ['py-1.5', 'px-3'],
 			lg: ['py-2', 'px-4']
 		},
 		disabled: {
@@ -24,19 +25,20 @@ const button = cva(['border rounded-md items-center justify-center shadow-sm'], 
 		}
 	},
 	defaultVariants: {
-		variant: 'default',
+		variant: 'gray',
 		size: 'default'
 	}
 });
 
 type ButtonProps = VariantProps<typeof button> & PressableProps;
+export type ButtonVariants = ButtonProps['variant'];
 
 export const Button: FC<ButtonProps> = ({ variant, size, disabled, ...props }) => {
 	const { style, ...otherProps } = props;
 	return (
 		<Pressable
 			disabled={disabled}
-			style={tw.style(button({ variant, size, disabled }), style as string)}
+			style={twStyle(button({ variant, size, disabled }), style as string)}
 			{...otherProps}
 		>
 			{props.children}
@@ -51,6 +53,7 @@ export const AnimatedButton: FC<AnimatedButtonProps> = ({ variant, size, disable
 	return (
 		<MotiPressable
 			disabled={disabled}
+			// @ts-ignore
 			animate={useMemo(
 				() =>
 					({ hovered, pressed }) => {
@@ -62,12 +65,27 @@ export const AnimatedButton: FC<AnimatedButtonProps> = ({ variant, size, disable
 					},
 				[]
 			)}
-			style={tw.style(button({ variant, size, disabled }), style as string)}
+			style={twStyle(button({ variant, size, disabled }), style as string)}
 			// MotiPressable acts differently than Pressable so containerStyle might need to used to achieve the same effect
 			containerStyle={containerStyle}
 			{...otherProps}
 		>
 			{props.children}
 		</MotiPressable>
+	);
+};
+
+// Useful for when you want to replicate a button but don't want to deal with the pressable logic (e.g. you need to disable the inner pressable)
+type FakeButtonProps = VariantProps<typeof button> & ViewProps;
+
+export const FakeButton: FC<FakeButtonProps> = ({ variant, size, ...props }) => {
+	const { style, ...otherProps } = props;
+	return (
+		<View
+			style={twStyle(button({ variant, size, disabled: false }), style as string)}
+			{...otherProps}
+		>
+			{props.children}
+		</View>
 	);
 };

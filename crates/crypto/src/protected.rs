@@ -28,51 +28,49 @@
 //! let value = protected_data.expose();
 //! ```
 //!
-use std::fmt::Debug;
-use zeroize::Zeroize;
 
-#[derive(Clone)]
-pub struct Protected<T>
+use std::{fmt::Debug, mem};
+
+use serde::{Deserialize, Serialize};
+use zeroize::{Zeroize, ZeroizeOnDrop};
+
+#[derive(Clone, Zeroize, ZeroizeOnDrop, Serialize, Deserialize)]
+#[serde(transparent)]
+pub struct Protected<T>(T)
 where
-	T: Zeroize,
-{
-	data: T,
-}
-
-impl<T> std::ops::Deref for Protected<T>
-where
-	T: Zeroize,
-{
-	type Target = T;
-
-	fn deref(&self) -> &Self::Target {
-		&self.data
-	}
-}
+	T: Zeroize;
 
 impl<T> Protected<T>
 where
 	T: Zeroize,
 {
 	pub const fn new(value: T) -> Self {
-		Self { data: value }
+		Self(value)
 	}
 
 	pub const fn expose(&self) -> &T {
-		&self.data
+		&self.0
 	}
 
 	pub fn zeroize(mut self) {
-		self.data.zeroize();
+		self.0.zeroize();
 	}
 }
 
-impl<T> Drop for Protected<T>
+impl<T: Zeroize> From<T> for Protected<T> {
+	fn from(value: T) -> Self {
+		Self(value)
+	}
+}
+
+impl<T> Protected<T>
 where
-	T: Zeroize,
+	T: Zeroize + Default,
 {
-	fn drop(&mut self) {
-		self.data.zeroize();
+	pub fn into_inner(mut self) -> T {
+		let mut out = Default::default();
+		mem::swap(&mut self.0, &mut out);
+		out
 	}
 }
 

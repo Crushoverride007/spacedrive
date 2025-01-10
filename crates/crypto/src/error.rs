@@ -1,65 +1,47 @@
 //! This module contains all possible errors that this crate can return.
 
-use thiserror::Error;
-
-#[cfg(feature = "rspc")]
-impl From<Error> for rspc::Error {
-	fn from(err: Error) -> Self {
-		Self::new(rspc::ErrorCode::InternalServerError, err.to_string())
-	}
-}
-
-pub type Result<T> = std::result::Result<T, Error>;
+use tokio::io;
 
 /// This enum defines all possible errors that this crate can give
-#[derive(Error, Debug)]
+#[derive(thiserror::Error, Debug)]
 pub enum Error {
-	#[error("not enough bytes were written to the output file")]
-	WriteMismatch,
-	#[error("there was an error hashing the password")]
-	PasswordHash,
-	#[error("I/O error: {0}")]
-	Io(#[from] std::io::Error),
-	#[error("error while encrypting")]
-	Encrypt,
-	#[error("error while decrypting")]
-	Decrypt,
-	#[error("nonce length mismatch")]
-	NonceLengthMismatch,
-	#[error("invalid file header")]
-	FileHeader,
-	#[error("error initialising stream encryption/decryption")]
-	StreamModeInit,
-	#[error("wrong password provided")]
-	IncorrectPassword,
-	#[error("no keyslots available")]
-	NoKeyslots,
-	#[error("mismatched data length while converting vec to array")]
-	VecArrSizeMismatch,
-	#[error("error while parsing preview media length")]
-	MediaLengthParse,
-	#[error("no preview media found")]
-	NoPreviewMedia,
-	#[error("error while serializing/deserializing the metadata")]
-	MetadataDeSerialization,
-	#[error("no metadata found")]
-	NoMetadata,
-	#[error("tried adding too many keyslots to a header")]
-	TooManyKeyslots,
-	#[error("requested key wasn't found in the key manager")]
-	KeyNotFound,
-	#[error("no default key has been set")]
-	NoDefaultKeySet,
-	#[error("no master password has been provided to the keymanager")]
-	NoMasterPassword,
-	#[error("mismatch between supplied keys and the keystore")]
-	KeystoreMismatch,
-	#[error("mutex lock error")]
-	MutexLock,
-}
+	#[error("Block too big for oneshot encryption: size in bytes = {0}")]
+	BlockTooBig(usize),
+	#[error("Invalid key size: expected 32 bytes, got {0}")]
+	InvalidKeySize(usize),
 
-impl<T> From<std::sync::PoisonError<T>> for Error {
-	fn from(_: std::sync::PoisonError<T>) -> Self {
-		Self::MutexLock
-	}
+	/// Encrypt and decrypt errors, AEAD crate doesn't provide any error context for these
+	/// as it can be a security hazard to leak information about the error.
+	#[error("Encryption error")]
+	Encrypt,
+	#[error("Decryption error")]
+	Decrypt,
+
+	/// I/O error while encrypting
+	#[error("I/O error while encrypting: {{context: {context}, source: {source}}}")]
+	EncryptIo {
+		context: &'static str,
+		#[source]
+		source: io::Error,
+	},
+	#[error("I/O error while decrypting: {{context: {context}, source: {source}}}")]
+	DecryptIo {
+		context: &'static str,
+		#[source]
+		source: io::Error,
+	},
+
+	/// I/O error while erasing a file
+	#[error("I/O error while erasing: {{context: {context}, source: {source}}}")]
+	EraseIo {
+		context: &'static str,
+		#[source]
+		source: io::Error,
+	},
+
+	#[error("hex error: {0}")]
+	Hex(#[from] hex::FromHexError),
+
+	#[error("Entropy source error: {0}")]
+	EntropySource(#[from] rand_core::getrandom::Error),
 }
