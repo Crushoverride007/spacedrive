@@ -1,32 +1,53 @@
-import { MotiView, useDynamicAnimation } from 'moti';
+import { MotiView } from 'moti';
 import { PropsWithChildren, ReactNode } from 'react';
-import { StyleSheet, View } from 'react-native';
-import { useDerivedValue, useSharedValue } from 'react-native-reanimated';
+import { StyleSheet, ViewProps } from 'react-native';
+import Animated, {
+	runOnJS,
+	useAnimatedStyle,
+	useSharedValue,
+	withTiming
+} from 'react-native-reanimated';
 import Layout from '~/constants/Layout';
-import tw from '~/lib/tailwind';
+
+type MotiViewProps = PropsWithChildren<ViewProps>;
 
 // Anything wrapped with FadeIn will fade in on mount.
-export const FadeInAnimation = ({ children, delay }: PropsWithChildren<{ delay?: number }>) => (
-	<MotiView from={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ type: 'timing', delay }}>
-		{children}
-	</MotiView>
-);
-
-export const FadeInUpAnimation = ({ children, delay }: PropsWithChildren<{ delay?: number }>) => (
+export const FadeInAnimation = ({
+	children,
+	delay,
+	...props
+}: MotiViewProps & { delay?: number }) => (
 	<MotiView
-		from={{ opacity: 0, translateY: 20 }}
-		animate={{ opacity: 1, translateY: 0 }}
+		from={{ opacity: 0 }}
+		animate={{ opacity: 1 }}
 		transition={{ type: 'timing', delay }}
+		{...props}
 	>
 		{children}
 	</MotiView>
 );
 
-export const LogoAnimation = ({ children }: PropsWithChildren) => (
+export const FadeInUpAnimation = ({
+	children,
+	delay,
+	...props
+}: MotiViewProps & { delay?: number }) => (
 	<MotiView
+		from={{ opacity: 0, translateY: 20 }}
+		animate={{ opacity: 1, translateY: 0 }}
+		transition={{ type: 'timing', delay }}
+		{...props}
+	>
+		{children}
+	</MotiView>
+);
+
+export const LogoAnimation = ({ children, ...props }: MotiViewProps) => (
+	<MotiView
+		transition={{ type: 'timing', delay: 200 }}
 		from={{ opacity: 0.8, translateY: Layout.window.width / 2 }}
 		animate={{ opacity: 1, translateY: 0 }}
-		transition={{ type: 'timing', delay: 200 }}
+		{...props}
 	>
 		{children}
 	</MotiView>
@@ -40,61 +61,54 @@ type AnimatedHeightProps = {
 	hide?: boolean;
 	onHeightDidAnimate?: (height: number) => void;
 	initialHeight?: number;
-} & React.ComponentProps<typeof MotiView>;
+	duration?: number;
+} & MotiViewProps;
 
 export function AnimatedHeight({
 	children,
-	hide = false,
+	hide = !children,
 	style,
-	delay = 0,
-	transition = { type: 'timing', delay },
 	onHeightDidAnimate,
-	initialHeight = 0,
-	...motiViewProps
+	duration = 200,
+	initialHeight = 0
 }: AnimatedHeightProps) {
 	const measuredHeight = useSharedValue(initialHeight);
-	const state = useDynamicAnimation(() => {
+	const childStyle = useAnimatedStyle(
+		() => ({
+			opacity: withTiming(!measuredHeight.value || hide ? 0 : 1, { duration })
+		}),
+		[hide, measuredHeight]
+	);
+
+	const containerStyle = useAnimatedStyle(() => {
 		return {
-			height: initialHeight,
-			opacity: !initialHeight || hide ? 0 : 1
+			height: withTiming(hide ? 0 : measuredHeight.value, { duration }, () => {
+				if (onHeightDidAnimate) {
+					runOnJS(onHeightDidAnimate)(measuredHeight.value);
+				}
+			})
 		};
-	});
-	if ('state' in motiViewProps) {
-		console.warn('[AnimateHeight] state prop not supported');
-	}
-
-	useDerivedValue(() => {
-		let height = Math.ceil(measuredHeight.value);
-		if (hide) {
-			height = 0;
-		}
-
-		state.animateTo({
-			height,
-			opacity: !height || hide ? 0 : 1
-		});
 	}, [hide, measuredHeight]);
 
 	return (
-		<MotiView
-			{...motiViewProps}
-			state={state}
-			transition={transition}
-			onDidAnimate={
-				onHeightDidAnimate &&
-				((key, finished, _, { attemptedValue }) =>
-					key === 'height' && onHeightDidAnimate(attemptedValue as number))
-			}
-			style={[tw`overflow-hidden`, style]}
-		>
-			<View
-				style={[StyleSheet.absoluteFill, { bottom: 'auto' }]}
+		<Animated.View style={[styles.hidden, style, containerStyle]}>
+			<Animated.View
+				style={[StyleSheet.absoluteFill, styles.autoBottom, childStyle]}
 				onLayout={({ nativeEvent }) => {
-					measuredHeight.value = nativeEvent.layout.height;
+					measuredHeight.value = Math.ceil(nativeEvent.layout.height);
 				}}
 			>
 				{children}
-			</View>
-		</MotiView>
+			</Animated.View>
+		</Animated.View>
 	);
 }
+
+const styles = StyleSheet.create({
+	autoBottom: {
+		bottom: 'auto'
+	},
+	hidden: {
+		overflow: 'hidden'
+	}
+});

@@ -1,125 +1,156 @@
-import VideoSvg from '@sd/assets/svgs/video.svg';
-import ZipSvg from '@sd/assets/svgs/zip.svg';
-import { ExplorerItem } from '@sd/client';
-import { Suspense, useMemo } from 'react';
-import { Image, Text, View } from 'react-native';
-import { DocumentDirectoryPath } from 'react-native-fs';
-import Svg, { Path } from 'react-native-svg';
-import { useExplorerStore } from '~/stores/explorerStore';
-import { isObject, isPath } from '~/types/helper';
+import { DocumentDirectoryPath } from '@dr.pogodin/react-native-fs';
+import { getIcon } from '@sd/assets/util';
+import { Image } from 'expo-image';
+import { useEffect, useLayoutEffect, useMemo, useState, type PropsWithChildren } from 'react';
+import { View } from 'react-native';
+import {
+	getExplorerItemData,
+	getItemLocation,
+	isDarkTheme,
+	ThumbKey,
+	type ExplorerItem
+} from '@sd/client';
+import { flattenThumbnailKey, useExplorerStore } from '~/stores/explorerStore';
 
-import icons from '../../assets/icons/file';
-import tw from '../../lib/tailwind';
-import FolderIcon from '../icons/FolderIcon';
+import { twStyle } from '../../lib/tailwind';
+
+// NOTE: `file://` is required for Android to load local files!
+export const getThumbnailUrlByThumbKey = (thumbKey: ThumbKey) => {
+	return `file://${DocumentDirectoryPath}/thumbnails/${encodeURIComponent(
+		thumbKey.base_directory_str
+	)}/${encodeURIComponent(thumbKey.shard_hex)}/${encodeURIComponent(thumbKey.cas_id)}.webp`;
+};
+
+const FileThumbWrapper = ({
+	children,
+	mediaView = false,
+	size = 1,
+	fixedSize = false
+}: PropsWithChildren<{ size: number; fixedSize: boolean; mediaView: boolean }>) => (
+	<View
+		style={[
+			twStyle(`items-center justify-center`, mediaView && `p-0.1 w-full flex-1 `),
+			!mediaView && {
+				width: fixedSize ? size : 70 * size,
+				height: fixedSize ? size : 70 * size
+			}
+		]}
+	>
+		{children}
+	</View>
+);
+
+function useExplorerItemData(explorerItem: ExplorerItem) {
+	const explorerStore = useExplorerStore();
+
+	const firstThumbnail =
+		explorerItem.type === 'Label'
+			? explorerItem.thumbnails?.[0]
+			: 'thumbnail' in explorerItem && explorerItem.thumbnail;
+
+	const newThumbnail = !!(
+		firstThumbnail && explorerStore.newThumbnails.has(flattenThumbnailKey(firstThumbnail))
+	);
+
+	return useMemo(() => {
+		const itemData = getExplorerItemData(explorerItem);
+
+		if (!itemData.hasLocalThumbnail) {
+			itemData.hasLocalThumbnail = newThumbnail;
+		}
+
+		return itemData;
+	}, [explorerItem, newThumbnail]);
+}
+
+enum ThumbType {
+	Icon,
+	// Original,
+	Thumbnail,
+	Location
+}
 
 type FileThumbProps = {
 	data: ExplorerItem;
-	/**
-	 * This is multiplier for calculating icon size
-	 * default: `1`
-	 */
 	size?: number;
-	kind?: 'video' | 'image' | 'audio' | 'zip' | 'other';
+	fixedSize?: boolean;
+	mediaView?: boolean;
+	// loadOriginal?: boolean;
 };
 
-export const getThumbnailUrlById = (casId: string) =>
-	`${DocumentDirectoryPath}/thumbnails/${encodeURIComponent(casId)}`;
+/**
+ * @param data This is the ExplorerItem object
+ * @param size This is multiplier for calculating icon size
+ * @param fixedSize If set to true, the icon will have fixed size
+ * @param mediaView If set to true - file thumbs will adjust their sizing accordingly
+ */
+export default function FileThumb({
+	size = 1,
+	fixedSize = false,
+	mediaView = false,
+	...props
+}: FileThumbProps) {
+	const itemData = useExplorerItemData(props.data);
+	const locationData = getItemLocation(props.data);
 
-export default function FileThumb({ data, size = 1, kind }: FileThumbProps) {
-	const explorerStore = useExplorerStore();
+	const [src, setSrc] = useState<null | string>(null);
+	const [thumbType, setThumbType] = useState(ThumbType.Icon);
 
-	const Icon = useMemo(() => {
-		const Icon = icons[data.extension];
-		return Icon;
-	}, [data.extension]);
+	useLayoutEffect(() => {
+		// Reset src when item changes, to allow detection of yet not updated src
+		setSrc(null);
+		if (locationData) {
+			setThumbType(ThumbType.Location);
+		} else if (itemData.hasLocalThumbnail) {
+			setThumbType(ThumbType.Thumbnail);
+		} else {
+			setThumbType(ThumbType.Icon);
+		}
+	}, [locationData, itemData]);
 
-	if (isPath(data) && data.is_dir)
-		return (
-			<View style={[tw`justify-center items-center`, { width: 60 * size, height: 60 * size }]}>
-				<FolderIcon size={50 * size} />
-			</View>
-		);
+	// This sets the src to the thumbnail url
+	useEffect(() => {
+		const { casId, kind, isDir, extension, thumbnailKey } = itemData;
+		switch (thumbType) {
+			case ThumbType.Thumbnail:
+				if (casId && thumbnailKey) {
+					setSrc(getThumbnailUrlByThumbKey(thumbnailKey));
+				} else {
+					setThumbType(ThumbType.Icon);
+				}
+				break;
+			case ThumbType.Location:
+				setSrc(getIcon('Folder', isDarkTheme(), extension, true));
+				break;
+			default:
+				if (isDir !== null) setSrc(getIcon(kind, isDarkTheme(), extension, isDir));
+				break;
+		}
+	}, [itemData, thumbType]);
 
-	const cas_id = isObject(data) ? data.cas_id : data.object?.cas_id;
-
-	if (!cas_id) return undefined;
-
-	const has_thumbnail = isObject(data)
-		? data.has_thumbnail
-		: isPath(data)
-		? data.object?.has_thumbnail
-		: !!explorerStore.newThumbnails[cas_id];
-
-	const url = getThumbnailUrlById(cas_id);
-
-	// Thumbnail
-	if (has_thumbnail && url) {
-		// TODO: Thumbnail job doesn't work?
-		// not styled yet
-		return <Image source={{ uri: url }} style={tw`w-[50px] h-[50px]`} />;
-	}
-
-	// Video
-	if (kind === 'video') {
-		return (
-			<View style={[tw`justify-center items-center`, { width: 60 * size, height: 60 * size }]}>
-				<VideoSvg width={50 * size} height={50 * size} />
-			</View>
-		);
-	}
-
-	// Zip
-	if (kind === 'zip') {
-		return (
-			<View style={[tw`justify-center items-center`, { width: 60 * size, height: 60 * size }]}>
-				<ZipSvg width={50 * size} height={50 * size} />
-			</View>
-		);
-	}
-
-	// Default file icon
 	return (
-		<View style={[tw`justify-center`, { width: 60 * size, height: 60 * size }]}>
-			<View style={[tw`m-auto relative`, { width: 45 * size, height: 60 * size }]}>
-				<Svg
-					// Background
-					style={tw`absolute top-0 left-0`}
-					fill={tw.color('gray-550')}
-					width={45 * size}
-					height={60 * size}
-					viewBox="0 0 65 81"
-				>
-					<Path d="M0 8a8 8 0 0 1 8-8h31.686a8 8 0 0 1 5.657 2.343L53.5 10.5l9.157 9.157A8 8 0 0 1 65 25.314V73a8 8 0 0 1-8 8H8a8 8 0 0 1-8-8V8Z" />
-				</Svg>
-				<Svg
-					// Peel
-					style={tw`absolute top-[2px] -right-[0.6px]`}
-					fill={tw.color('gray-500')}
-					width={15 * size}
-					height={15 * size}
-					viewBox="0 0 41 41"
-				>
-					<Path d="M41.412 40.558H11.234C5.03 40.558 0 35.528 0 29.324V0l41.412 40.558Z" />
-				</Svg>
-				{/* File Icon & Extension */}
-				<View style={tw`absolute w-full h-full items-center justify-center`}>
-					{Icon && (
-						<Suspense fallback={<></>}>
-							<Icon width={18 * size} height={18 * size} style={tw`mt-2`} />
-						</Suspense>
-					)}
-					<Text
-						style={[
-							tw`mt-1 font-bold text-center uppercase text-gray-450`,
-							{
-								fontSize: 10 * (size * 0.8)
-							}
-						]}
-					>
-						{data.extension}
-					</Text>
-				</View>
-			</View>
-		</View>
+		<FileThumbWrapper mediaView={mediaView} fixedSize={fixedSize} size={size}>
+			{(() => {
+				if (src == null) return null;
+				let source = null;
+				// getIcon returns number for some magic reason
+				if (typeof src === 'number') {
+					source = src;
+				} else {
+					source = { uri: src };
+				}
+				return (
+					<Image
+						cachePolicy="memory-disk"
+						source={source}
+						style={{
+							flex: !mediaView ? undefined : 1,
+							width: !mediaView ? (fixedSize ? size : 70 * size) : '100%',
+							height: !mediaView ? (fixedSize ? size : 70 * size) : '100%'
+						}}
+					/>
+				);
+			})()}
+		</FileThumbWrapper>
 	);
 }

@@ -1,79 +1,71 @@
-import { useNavigation } from '@react-navigation/native';
-import { ExplorerItem } from '@sd/client';
+import { useMemo } from 'react';
 import { Pressable, Text, View } from 'react-native';
+import { ExplorerItem, getItemFilePath, getItemObject, Tag } from '@sd/client';
+import Layout from '~/constants/Layout';
+import { tw, twStyle } from '~/lib/tailwind';
+import { getExplorerStore } from '~/stores/explorerStore';
 
-import tw from '../../lib/tailwind';
-import { SharedScreenProps } from '../../navigation/SharedScreens';
-import { useFileModalStore } from '../../stores/modalStore';
 import FileThumb from './FileThumb';
 
 type FileItemProps = {
 	data: ExplorerItem;
+	onPress: () => void;
+	onLongPress: () => void;
+	renameHandler: () => void;
 };
 
-const FileItem = ({ data }: FileItemProps) => {
-	const { fileRef, setData } = useFileModalStore();
+const FileItem = ({ data, onLongPress, onPress, renameHandler }: FileItemProps) => {
+	const gridItemSize = Layout.window.width / getExplorerStore().gridNumColumns;
 
-	const navigation = useNavigation<SharedScreenProps<'Location'>['navigation']>();
+	const filePath = getItemFilePath(data);
+	const object = getItemObject(data);
 
-	function handlePress() {
-		// 	if (!data) return;
-		// 	if (data.is_dir) {
-		// 		navigation.navigate('Location', { id: data.location_id });
-		// 	} else {
-		// 		setData(data);
-		// 		fileRef.current.present();
-		// 	}
-	}
+	const maxTags = 3;
+	const tags = useMemo(() => {
+		if (!object) return [];
+		return 'tags' in object ? object.tags.slice(0, maxTags) : [];
+	}, [object]);
 
 	return (
-		<Pressable onPress={handlePress}>
-			<View style={tw`w-[90px] h-[80px] items-center`}>
-				<FileThumb
-					data={data}
-					kind={data.extension === 'zip' ? 'zip' : isVideo(data.extension) ? 'video' : 'other'}
-				/>
-				<View style={tw`px-1.5 py-[1px] mt-1`}>
-					<Text numberOfLines={1} style={tw`text-xs font-medium text-center text-gray-300`}>
-						{data?.name}
+		<View
+			style={twStyle('items-center', {
+				width: gridItemSize,
+				height: gridItemSize
+			})}
+		>
+			<Pressable onPress={onPress} onLongPress={onLongPress}>
+				<FileThumb data={data} />
+			</Pressable>
+			<Pressable onLongPress={renameHandler}>
+				<View style={tw`mt-1 px-1.5 py-px`}>
+					<Text numberOfLines={1} style={tw`text-center text-xs font-medium text-white`}>
+						{filePath?.name}
+						{filePath?.extension && `.${filePath.extension}`}
 					</Text>
 				</View>
+			</Pressable>
+			<View
+				style={twStyle(`mx-auto flex-row justify-center pt-1.5`, {
+					left: tags.length * 2 //for every tag we add 2px to the left
+				})}
+			>
+				{tags.map(({ tag }: { tag: Tag }, idx: number) => {
+					return (
+						<View
+							key={tag.id}
+							style={twStyle(
+								`relative h-3.5 w-3.5 rounded-full border-2 border-black`,
+								{
+									backgroundColor: tag.color!,
+									right: idx * 6
+								}
+							)}
+						/>
+					);
+				})}
 			</View>
-		</Pressable>
+		</View>
 	);
 };
 
 export default FileItem;
-
-// Copied from FileItem.tsx (interface/src/components/explorer/FileItem.tsx)
-function isVideo(extension: string) {
-	return [
-		'avi',
-		'asf',
-		'mpeg',
-		'mts',
-		'mpe',
-		'vob',
-		'qt',
-		'mov',
-		'asf',
-		'asx',
-		'mjpeg',
-		'ts',
-		'mxf',
-		'm2ts',
-		'f4v',
-		'wm',
-		'3gp',
-		'm4v',
-		'wmv',
-		'mp4',
-		'webm',
-		'flv',
-		'mpg',
-		'hevc',
-		'ogv',
-		'swf',
-		'wtv'
-	].includes(extension);
-}

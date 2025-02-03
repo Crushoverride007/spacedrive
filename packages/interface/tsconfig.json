@@ -1,4 +1,0 @@
-{
-	"extends": "@sd/config/interface.tsconfig.json",
-	"include": ["src"]
-}
